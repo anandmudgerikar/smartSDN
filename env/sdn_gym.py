@@ -1,23 +1,36 @@
 import gym
-
 import random
 from gym import error, spaces, utils
 from gym.utils import seeding
 import numpy as np
 import pandas as pd
+import time
+
+from mininet.log import setLogLevel, info
+from mininet_setup import Mininet_Backend
 
 class SDN_Gym(gym.Env):
+
     def __init__(self):
 
-        self.action_space = spaces.MultiDiscrete([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
-        self.observation_space = spaces.MultiDiscrete([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 48])
-
+        self.action_space = spaces.MultiDiscrete([3, 3, 3, 3, 3])
+        self.observation_space = spaces.MultiDiscrete([100, 100, 100, 100, 100])
         self.ob = self._get_initial_state()
         self.episode_over = False
         self.turns = 0
         self.sum_rewards = 0.0
 
-    def _step(self, action_index):
+        #starting mininet setup
+        setLogLevel('info')
+        self.mn_backend = Mininet_Backend()
+        self.curr_net = self.mn_backend.startTest()
+        self.mn_backend.replay_flows(self.curr_net)
+
+        #thresholds
+        self.server_thresh = 100
+        self.sla = 10
+
+    def _step(self, action):
         """
         Parameters
         ----------
@@ -44,11 +57,14 @@ class SDN_Gym(gym.Env):
                  However, official evaluations of your agent are not allowed to
                  use this for learning.
         """
+        #each step is taken after 60 seconds
+        time.sleep(60)
+
         self.turns += 1
-        self._take_action(action_index)
         self.ob = self._get_new_state()
-        self.reward = self._get_reward(action_index)
-        if self.turns > 100 or self.sum_rewards > 50:
+        self.reward = self._get_reward()
+
+        if self.turns > 100:
             self.episode_over = True
 
         return self.ob, self.reward, self.episode_over, {}
@@ -59,43 +75,40 @@ class SDN_Gym(gym.Env):
         :return:
         """
         self.turns = 0
-        self.ob = self._get_random_initial_state()
+        self.ob = self._get_initial_state()
         self.episode_over = False
         self.sum_rewards = 0.0
         return self.ob
 
-    def _render(self, mode='human', close=False):
-        pass
-
-    def _take_action(self, action_index):
+    def _take_action(self, action):
         """
         Take an action correpsonding to action_index in the current state
         :param action_index:
         :return:
         """
-        assert action_index < len(self.ACTION_LOOKUP)
-        action = self.ACTION_LOOKUP[action_index]
-        # print(action)
-        return
+
+
 
     def _get_reward(self, action_index):
         """
         Get reward for the action taken in the current state
         :return:
         """
-        df = self.df_xy
-        n = df[df['s'] == self.ob].index[0]
-        y = df.iloc[n][0]
-        if y == 1.0:
-            if action_index == 0:
-                reward = 1.0
-            else:
-                reward = -1.0
-        elif y == -1.0:
-            if action_index == 1:
-                reward = 1.0
-            else:
-                reward = -1.0
+        reward = 10
+        total_load = self.ob[0] + self.ob[1] + self.ob[2] + self.ob[3] + self.ob[4]
+
+        #if server is overloaded
+        if (total_load > self.server_thresh):
+            reward = reward - 50
+
+        #if sla is being breached,
+        if(self.ob[0] < self.sla):
+            reward = reward - 10
+
+        #do sla for other users
+
+        #security policy (from partial signatures)
+
         return reward
 
     def _get_new_state(self):
@@ -103,18 +116,14 @@ class SDN_Gym(gym.Env):
         Get the next state from current state
         :return:
         """
-        df = self.df_xy
-        n = df[df['s'] == self.ob].index[0]
-        y = df.iloc[n][0]
-        next_state = df.iloc[n + 1][1]
+        curr_state = self.ob
+        u1_load = self.mn_backend.get_serverload(self.curr_net)
+
+        next_state = (u1_load - self.ob[0],0,0,0,0)
         return next_state
 
-    def _get_random_initial_state(self):
-        nrand = random.randint(0, self.df_xy.shape[0])
-        return self.df_xy.iloc[nrand][1]
-
-    def _seed(self):
-        return
+    def _get_initial_state(self):
+        return (0, 0, 0, 0, 0)
 
 
 

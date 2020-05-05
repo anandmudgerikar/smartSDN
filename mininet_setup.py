@@ -54,12 +54,26 @@ class Mininet_Backend():
     def get_serverload(self,net):
         #get server load from each flow
         flows = net.getNodeByName('s1').cmd('ovs-ofctl dump-flows s1')
+        f1_curr_server_load = (0,0,0,0,0)
 
         for flow in flows.split('\n'):
             if("ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
-                f1_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
+                f1_curr_server_load[0] = int(flow.split("n_bytes=")[1].split(",")[0])
                 #print(f1_curr_server_load)
-                return f1_curr_server_load
+
+            if ("ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
+                f1_curr_server_load[1] = int(flow.split("n_bytes=")[1].split(",")[0])
+
+            if ("ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
+                f1_curr_server_load[2] = int(flow.split("n_bytes=")[1].split(",")[0])
+
+            if ("ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
+                f1_curr_server_load[3] = int(flow.split("n_bytes=")[1].split(",")[0])
+
+            if ("ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
+                f1_curr_server_load[4] = int(flow.split("n_bytes=")[1].split(",")[0])
+
+        return f1_curr_server_load
 
     def stop_test(self,net):
         net.stop()
