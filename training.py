@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 # import matplotlib, plotting
 import random
+from env import sdn_gym
 
 env = gym.make('sdn-v0')
 

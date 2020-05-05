@@ -39,7 +39,18 @@ class Mininet_Backend():
         #net.getNodeByName('s1').setIP('192.168.10.19')
 
         #adding flows for calculating server load and per flow server load
+        #normal flow
         net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:2')
+        #queue flow to load balance
+        #net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=30000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
+        #forward malcicious looking flow to IDS
+        #net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=10000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:4')
+
+        #testing modifying flows for actions in RL
+        #modifying flow to queue from normal forwarding
+        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
+        #net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=10000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:2')
+
         net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.50,nw_dst=192.168.10.19,ip,tp_src=21,actions=output:1')
 
         #CLI(net)
@@ -54,26 +65,28 @@ class Mininet_Backend():
     def get_serverload(self,net):
         #get server load from each flow
         flows = net.getNodeByName('s1').cmd('ovs-ofctl dump-flows s1')
-        f1_curr_server_load = (0,0,0,0,0)
+
 
         for flow in flows.split('\n'):
-            if("ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
-                f1_curr_server_load[0] = int(flow.split("n_bytes=")[1].split(",")[0])
+            if("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
+                u1_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
                 #print(f1_curr_server_load)
 
-            if ("ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
-                f1_curr_server_load[1] = int(flow.split("n_bytes=")[1].split(",")[0])
+            if ("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
+                u2_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
 
-            if ("ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
-                f1_curr_server_load[2] = int(flow.split("n_bytes=")[1].split(",")[0])
+            if ("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
+                u3_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
 
-            if ("ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
-                f1_curr_server_load[3] = int(flow.split("n_bytes=")[1].split(",")[0])
+            if ("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
+                u4_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
 
-            if ("ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
-                f1_curr_server_load[4] = int(flow.split("n_bytes=")[1].split(",")[0])
+            if ("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
+                u5_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
 
-        return f1_curr_server_load
+        print(u1_curr_server_load, u2_curr_server_load, u3_curr_server_load, u4_curr_server_load, u5_curr_server_load)
+
+        return (u1_curr_server_load,u2_curr_server_load,u3_curr_server_load,u4_curr_server_load,u5_curr_server_load)
 
     def stop_test(self,net):
         net.stop()
@@ -84,6 +97,15 @@ if __name__ == '__main__':
     mn_backend = Mininet_Backend()
     curr_net = mn_backend.startTest()
     mn_backend.replay_flows(curr_net)
-    time.sleep(500)
-    print("Current server load from user 1:"+str(mn_backend.get_serverload(curr_net)))
+
+    #sleeping for flows to populate
+    print("sleeping")
+    time.sleep(50)
+
+    #printing all flows for testing
+    flows = curr_net.getNodeByName('s1').cmd('ovs-ofctl dump-flows s1')
+    print(flows)
+
+    #printing server loads from each user
+    print("Current server load from users:"+str(mn_backend.get_serverload(curr_net)))
     mn_backend.stop_test(curr_net)

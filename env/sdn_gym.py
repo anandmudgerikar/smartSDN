@@ -6,6 +6,13 @@ import numpy as np
 import pandas as pd
 import time
 
+from mininet.topo import Topo
+from mininet.net import Mininet
+from mininet.util import dumpNodeConnections
+from mininet.log import setLogLevel
+from mininet.net import Mininet, CLI
+from mininet.node import OVSKernelSwitch, Host
+from mininet.link import TCLink, Link
 from mininet.log import setLogLevel, info
 from mininet_setup import Mininet_Backend
 
@@ -59,6 +66,8 @@ class SDN_Gym(gym.Env):
         """
         #each step is taken after 60 seconds
         time.sleep(60)
+        #perform action
+        self._take_action(action)
 
         self.turns += 1
         self.ob = self._get_new_state()
@@ -86,7 +95,12 @@ class SDN_Gym(gym.Env):
         :param action_index:
         :return:
         """
-
+        if(action[0] == 1): #queue flow
+            self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
+        elif(action[0] == 2): #send flow to IDS
+            self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:4')
+        else: #normal forward to server
+            self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:2')
 
 
     def _get_reward(self, action_index):
@@ -117,9 +131,9 @@ class SDN_Gym(gym.Env):
         :return:
         """
         curr_state = self.ob
-        u1_load = self.mn_backend.get_serverload(self.curr_net)
+        load = self.mn_backend.get_serverload(self.curr_net)
 
-        next_state = (u1_load - self.ob[0],0,0,0,0)
+        next_state = (load[0] - curr_state[0],load[1] - curr_state[1],load[2] - curr_state[2],load[3] - curr_state[3],load[4] - curr_state[4])
         return next_state
 
     def _get_initial_state(self):
