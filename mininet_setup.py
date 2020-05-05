@@ -48,8 +48,8 @@ class Mininet_Backend():
     def replay_flows(self,net):
         # Replaying packets from pcaps
         print("replaying flow from user1")
-        #print(net.getNodeByName('h1').cmd('tcpreplay -i h1-eth0 pcaps/user1_linux.pcap &'))
-        net.getNodeByName('h1').cmd('tcpreplay -i h1-eth0 pcaps/user1_linux.pcap &')
+        #print(net.getNodeByName('h1').cmd('tcpreplay -i h1-eth0 pcaps/ &'))
+        net.getNodeByName('h1').cmd('tcpreplay -i h1-eth0 pcaps/ &')
 
 
     def get_serverload(self,net):
