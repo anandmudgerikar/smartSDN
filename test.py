@@ -1,6 +1,7 @@
+import sys
+sys.path.append("/home/anand/gym")
 import gym
-import numpy as np
-import pandas as pd
+
 from env.sdn_gym import SDN_Gym
 
 env = gym.make('sdn-v0')
@@ -9,9 +10,7 @@ env.reset()
 action = (0,0,0,0,0)
 # print x
 
-
-
-for i in range(3):
+for i in range(120):
     observation, reward, done, info = env.step(action)
     print(observation)
     print(reward)

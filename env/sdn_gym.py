@@ -2,8 +2,6 @@ import gym
 import random
 from gym import error, spaces, utils
 from gym.utils import seeding
-import numpy as np
-import pandas as pd
 import time
 
 from mininet.topo import Topo
@@ -34,8 +32,8 @@ class SDN_Gym(gym.Env):
         self.mn_backend.replay_flows(self.curr_net)
 
         #thresholds
-        self.server_thresh = 100
-        self.sla = 10
+        self.server_thresh = 10000
+        self.sla = 200
 
     def _step(self, action):
         """
@@ -65,7 +63,7 @@ class SDN_Gym(gym.Env):
                  use this for learning.
         """
         #each step is taken after 60 seconds
-        time.sleep(60)
+        time.sleep(10)
         #perform action
         self._take_action(action)
 
@@ -73,7 +71,7 @@ class SDN_Gym(gym.Env):
         self.ob = self._get_new_state()
         self.reward = self._get_reward()
 
-        if self.turns > 100:
+        if self.turns > 1000:
             self.episode_over = True
 
         return self.ob, self.reward, self.episode_over, {}
@@ -103,7 +101,7 @@ class SDN_Gym(gym.Env):
             self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:2')
 
 
-    def _get_reward(self, action_index):
+    def _get_reward(self):
         """
         Get reward for the action taken in the current state
         :return:
@@ -116,7 +114,7 @@ class SDN_Gym(gym.Env):
             reward = reward - 50
 
         #if sla is being breached,
-        if(self.ob[0] < self.sla):
+        if(self.ob[0] < self.sla and self.ob[0] > 0):
             reward = reward - 10
 
         #do sla for other users
@@ -138,6 +136,9 @@ class SDN_Gym(gym.Env):
 
     def _get_initial_state(self):
         return (0, 0, 0, 0, 0)
+
+    def _seed(self):
+        return
 
 
 

@@ -1,11 +1,12 @@
+import sys
+sys.path.append("home/anand/mininet/mininet/mininet")
+sys.path.append("home/anand/mininet/mininet/")
+sys.path.append("/usr/local/lib/python2.7/site-packages")
+#
 from mininet.topo import Topo
-from mininet.net import Mininet
-from mininet.util import dumpNodeConnections
-from mininet.log import setLogLevel
 from mininet.net import Mininet, CLI
-from mininet.node import OVSKernelSwitch, Host
-from mininet.link import TCLink, Link
 from mininet.log import setLogLevel, info
+
 
 import time
 
@@ -84,7 +85,7 @@ class Mininet_Backend():
             if ("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
                 u5_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
 
-        print(u1_curr_server_load, u2_curr_server_load, u3_curr_server_load, u4_curr_server_load, u5_curr_server_load)
+        #print(u1_curr_server_load, u2_curr_server_load, u3_curr_server_load, u4_curr_server_load, u5_curr_server_load)
 
         return (u1_curr_server_load,u2_curr_server_load,u3_curr_server_load,u4_curr_server_load,u5_curr_server_load)
 
