@@ -73,7 +73,8 @@ class SDN_Gym(gym.Env):
 
         self.turns += 1
         self.ob = self._get_new_state()
-        self.reward = self._get_reward()
+        self.reward = self._get_reward(action)
+        self.sum_rewards += self.reward
 
         if self.turns > 100:
             self.episode_over = True
@@ -105,25 +106,40 @@ class SDN_Gym(gym.Env):
             self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:2')
 
 
-    def _get_reward(self):
+    def _get_reward(self,action):
         """
         Get reward for the action taken in the current state
         :return:
         """
+        #collecting parameters from flow
         reward = 10
         total_load = self.ob[0] + self.ob[1] + self.ob[2] + self.ob[3] + self.ob[4]
+        flow_rate_user = self.ob[0] / 10
 
-        #if server is overloaded
-        if (total_load > self.server_thresh):
-            reward = reward - 50
+        if(action != 2): #not being sent to IDS.. not security violation detected
+            #if server is overloaded
+            if (total_load > self.server_thresh):
+                if(action == 0):
+                    reward = reward - 50 #not queued
+                else:
+                    reward = reward + 50 #correctly queued
 
-        #if sla is being breached,
-        if(self.ob[0] < self.sla and self.ob[0] > 0):
-            reward = reward - 10
+            #if sla is being breached,
+            if(self.ob[0] < self.sla and self.ob[0] > 0):
+                if(action == 1):
+                    reward = reward - 50 #incorrect queing causing low user rate
+                else:
+                    reward = reward + 50 #forwarding to improve user rate
+            #do sla for other users
 
-        #do sla for other users
-
-        #security policy (from partial signatures)
+            #security policy violation but not being sent to IDS (true negative)
+            if(flow_rate_user > 0.798731): #HULK DOS Attack partial signature match
+                reward = reward - 500
+        else:
+            if (flow_rate_user > 0.798731):  # HULK DOS Attack partial signature match
+                reward = reward + 500 #correctly sending to verify at IDS
+            else:
+                reward = reward - 500 #false positive
 
         return reward
 
