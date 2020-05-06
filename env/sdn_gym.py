@@ -4,6 +4,10 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 import time
 
+import sys
+#sys.path.append("/usr/lib/python2.7/dist-packages/")
+sys.path.append("/home/anand/mininet/mininet")
+
 from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.util import dumpNodeConnections
@@ -18,7 +22,7 @@ class SDN_Gym(gym.Env):
 
     def __init__(self):
 
-        self.action_space = spaces.MultiDiscrete([3, 3, 3, 3, 3])
+        self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.MultiDiscrete([100, 100, 100, 100, 100])
         self.ob = self._get_initial_state()
         self.episode_over = False
@@ -71,7 +75,7 @@ class SDN_Gym(gym.Env):
         self.ob = self._get_new_state()
         self.reward = self._get_reward()
 
-        if self.turns > 1000:
+        if self.turns > 100:
             self.episode_over = True
 
         return self.ob, self.reward, self.episode_over, {}
@@ -93,9 +97,9 @@ class SDN_Gym(gym.Env):
         :param action_index:
         :return:
         """
-        if(action[0] == 1): #queue flow
+        if(action == 1): #queue flow
             self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
-        elif(action[0] == 2): #send flow to IDS
+        elif(action == 2): #send flow to IDS
             self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:4')
         else: #normal forward to server
             self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:2')

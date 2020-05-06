@@ -1,8 +1,7 @@
 import sys
 sys.path.append("/home/anand/gym")
-sys.path.append("/home/anand/anaconda3/envs/mininet_backend/lib/python3.7/site-packages")
-sys.path.append("/home/anand/anaconda3/envs/mininet_backend/bin/python")
-import tools
+# sys.path.append("/home/anand/anaconda3/envs/mininet_backend/lib/python3.7/site-packages")
+# sys.path.append("/home/anand/anaconda3/envs/mininet_backend/bin/python")
 import gym
 import numpy as np
 import random
@@ -81,11 +80,12 @@ class DQNAgent:
 EPISODES = 70
 
 state_size = env.observation_space.shape[0]
-action_size = env.action_space.shape[0]
+action_size = env.action_space.n
+print("state and action sizes are:"+str(state_size)+","+str(action_size))
 agent = DQNAgent(state_size, action_size)
 # agent.load("./save/cartpole-dqn.h5")
 done = False
-batch_size = 50
+batch_size =100
 
 for e in range(EPISODES):
     state = env.reset()

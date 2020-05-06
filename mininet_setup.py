@@ -1,11 +1,14 @@
 import sys
-sys.path.append("home/anand/mininet/mininet/mininet")
-sys.path.append("home/anand/mininet/mininet/")
-sys.path.append("/usr/local/lib/python2.7/site-packages")
-#
+sys.path.append("/usr/lib/python2.7/dist-packages/")
+#sys.path.append("home/anand/mininet/mininet/")
+
+# from log import setLogLevel
+from mininet.net import Mininet
 from mininet.topo import Topo
-from mininet.net import Mininet, CLI
-from mininet.log import setLogLevel, info
+
+# from mininet.topo import Topo
+# from mininet.net import Mininet
+# from mininet.log import setLogLevel
 
 
 import time
@@ -22,6 +25,11 @@ class SingleSwitchTopo(Topo):
 class Mininet_Backend():
 
     n = 3 #Number of nodes in the network
+    u1_curr_server_load = 0
+    u2_curr_server_load = 0
+    u3_curr_server_load = 0
+    u4_curr_server_load = 0
+    u5_curr_server_load = 0
 
     def startTest(self):
         "Create and test a simple network"
@@ -70,31 +78,30 @@ class Mininet_Backend():
 
         for flow in flows.split('\n'):
             if("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
-                u1_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
+                self.u1_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
                 #print(f1_curr_server_load)
 
             if ("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
-                u2_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
+                self.u2_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
 
             if ("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
-                u3_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
+                self.u3_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
 
             if ("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
-                u4_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
+                self.u4_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
 
             if ("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
-                u5_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
+                self.u5_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
 
         #print(u1_curr_server_load, u2_curr_server_load, u3_curr_server_load, u4_curr_server_load, u5_curr_server_load)
 
-        return (u1_curr_server_load,u2_curr_server_load,u3_curr_server_load,u4_curr_server_load,u5_curr_server_load)
+        return (self.u1_curr_server_load,self.u2_curr_server_load,self.u3_curr_server_load,self.u4_curr_server_load,self.u5_curr_server_load)
 
     def stop_test(self,net):
         net.stop()
 
 if __name__ == '__main__':
     # Tell mininet to print useful information
-    setLogLevel('info')
     mn_backend = Mininet_Backend()
     curr_net = mn_backend.startTest()
     mn_backend.replay_flows(curr_net)
