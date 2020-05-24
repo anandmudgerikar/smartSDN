@@ -67,7 +67,7 @@ class SDN_Gym(gym.Env):
                  use this for learning.
         """
         #each step is taken after 60 seconds
-        time.sleep(10)
+        time.sleep(2)
         #perform action
         self._take_action(action)
 

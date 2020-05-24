@@ -15,7 +15,7 @@ import time
 
 class SingleSwitchTopo(Topo):
     "Single switch connected to n hosts."
-    def build(self, n=2):
+    def build(self, n=6):
         switch = self.addSwitch('s1')
         # Python's range(N) generates 0..N-1
         for h in range(n):
@@ -42,14 +42,24 @@ class Mininet_Backend():
         #net.pingAll()
 
         #setting ips according to pcaps
-        net.getNodeByName('h1').setIP('192.168.10.19')
-        net.getNodeByName('h2').setIP('192.168.10.50')
-        net.getNodeByName('h3').setIP('172.16.0.1')
-        #net.getNodeByName('s1').setIP('192.168.10.19')
+        #users
+        net.getNodeByName('h1').setIP('192.168.10.19') #user 1 - linux
+        net.getNodeByName('h2').setIP('192.168.10.14') #user 2 - win10
+        net.getNodeByName('h3').setIP('192.168.10.25') #user 3 - mac
+        net.getNodeByName('h4').setIP('192.168.10.9') #user 4 - win7
+
+        #attackers
+        net.getNodeByName('h5').setIP('172.16.0.1') # attacker 1 - kali
+
+        #servers
+        net.getNodeByName('h6').setIP('192.168.10.50') #server 1 - ubuntu
 
         #adding flows for calculating server load and per flow server load
-        #normal flow
+        #normal flow forwarding: for users 1-4 to server
         net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:2')
+        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.14,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:2')
+        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.25,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:2')
+        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.9,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:2')
         #queue flow to load balance
         #net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=30000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
         #forward malcicious looking flow to IDS
@@ -58,9 +68,13 @@ class Mininet_Backend():
         #testing modifying flows for actions in RL
         #modifying flow to queue from normal forwarding
         net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
+        # net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.14,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
+        # net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.25,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
+        # net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.9,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
+        # net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
         #net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=10000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:2')
 
-        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.50,nw_dst=192.168.10.19,ip,tp_src=21,actions=output:1')
+        #net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.50,nw_dst=192.168.10.19,ip,tp_src=21,actions=output:1')
 
         #CLI(net)
         return net
@@ -70,6 +84,11 @@ class Mininet_Backend():
         print("replaying flow from user1")
         #print(net.getNodeByName('h1').cmd('tcpreplay -i h1-eth0 pcaps/ &'))
         net.getNodeByName('h1').cmd('tcpreplay -i h1-eth0 pcaps/user1_linux.pcap &')
+        net.getNodeByName('h2').cmd('tcpreplay -i h1-eth0 pcaps/user2_win10.pcap &')
+        net.getNodeByName('h3').cmd('tcpreplay -i h1-eth0 pcaps/user3_mac.pcap &')
+        net.getNodeByName('h4').cmd('tcpreplay -i h1-eth0 pcaps/user4_win7.pcap &')
+
+        net.getNodeByName('h5').cmd('tcpreplay -i h1-eth0 pcaps/attacker_kali.pcap &')
 
     def get_serverload(self,net):
         #get server load from each flow
@@ -81,16 +100,16 @@ class Mininet_Backend():
                 self.u1_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
                 #print(f1_curr_server_load)
 
-            if ("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
+            if ("priority=60000,ip,nw_src=192.168.10.14,nw_dst=192.168.10.50" in flow):
                 self.u2_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
 
-            if ("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
+            if ("priority=60000,ip,nw_src=192.168.10.25,nw_dst=192.168.10.50" in flow):
                 self.u3_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
 
-            if ("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
+            if ("priority=60000,ip,nw_src=192.168.10.9,nw_dst=192.168.10.50" in flow):
                 self.u4_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
 
-            if ("priority=60000,ip,nw_src=192.168.10.19,nw_dst=192.168.10.50" in flow):
+            if ("priority=60000,ip,nw_src=172.16.0.1,nw_dst=192.168.10.50" in flow):
                 self.u5_curr_server_load = int(flow.split("n_bytes=")[1].split(",")[0])
 
         #print(u1_curr_server_load, u2_curr_server_load, u3_curr_server_load, u4_curr_server_load, u5_curr_server_load)
