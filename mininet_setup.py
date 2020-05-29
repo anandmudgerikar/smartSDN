@@ -1,5 +1,6 @@
 import sys
-sys.path.append("/usr/lib/python2.7/dist-packages/")
+sys.path.append("/home/anand/mininet/mininet")
+#sys.path.append("/usr/lib/python2.7/dist-packages/")
 #sys.path.append("home/anand/mininet/mininet/")
 
 # from log import setLogLevel
@@ -15,7 +16,7 @@ import time
 
 class SingleSwitchTopo(Topo):
     "Single switch connected to n hosts."
-    def build(self, n=6):
+    def build(self, n=3):
         switch = self.addSwitch('s1')
         # Python's range(N) generates 0..N-1
         for h in range(n):
@@ -24,7 +25,7 @@ class SingleSwitchTopo(Topo):
 
 class Mininet_Backend():
 
-    n = 3 #Number of nodes in the network
+    n = 6 #Number of nodes in the network
     u1_curr_server_load = 0
     u2_curr_server_load = 0
     u3_curr_server_load = 0
