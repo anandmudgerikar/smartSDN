@@ -5,6 +5,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
+from sklearn import preprocessing
 
 
 # importing Dataset (known attack signatures)
@@ -26,14 +27,25 @@ def importdata():
 # split the dataset
 def splitdataset(balance_data):
     # Separating the target variable
-    X = balance_data.values[:, 0:77]
-    Y = balance_data.values[:, 78]
+    X = balance_data.values[1:, 0:77]
+    Y = balance_data.values[1:, 78]
+
+    #normalizing nan values to max float32
+    X = np.nan_to_num(X.astype(np.float32))
+
+    # #transforming Y to categorical label (0,1)
+    # le = preprocessing.LabelEncoder()
+    # le.fit(["BENIGN", "Malicious"])
+    # Y = le.transform(Y)
 
     # Splitting the dataset into train and test
     X_train, X_test, y_train, y_test = train_test_split(
-        X, Y, test_size=0.3, random_state=100)
+        X, Y, test_size=0.3, random_state=1)
 
     print("Splitting complete")
+
+    if(balance_data.isna == True):
+        print("error: nan infinity in the dataset")
 
     return X, Y, X_train, X_test, y_train, y_test
 
@@ -52,7 +64,7 @@ def prediction(X_test, clf_object):
     # Predicton on test with giniIndex
     y_pred = clf_object.predict(X_test)
     print("Predicted values:")
-    print(y_pred)
+    #print(y_pred)
     return y_pred
 
 
