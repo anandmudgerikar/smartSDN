@@ -15,6 +15,10 @@ def importdata():
     # removing na and normalizing with mean
     balance_data.fillna(balance_data.mean())
 
+    #for partial signatures (limited feature set)
+    feature_cols = ['Flow Bytes/s',' Flow Packets/s', ' Label']
+    balance_data = balance_data[feature_cols]  # Features
+
     # Printing the dataswet shape
     print("Dataset Length: ", len(balance_data))
     print("Dataset Shape: ", balance_data.shape)
@@ -23,14 +27,16 @@ def importdata():
     # Printing the dataset obseravtions
     print("Dataset: ", balance_data.head())
 
+
+
     return balance_data
 
 
 # split the dataset
 def splitdataset(balance_data):
     # Separating the target variable
-    X = balance_data.values[:, 0:77]
-    Y = balance_data.values[:, 78]
+    X = balance_data.values[:, 0:1]
+    Y = balance_data.values[:, 2]
 
     #normalizing nan values to max float32
     X = np.nan_to_num(X.astype(np.float32))
