@@ -42,6 +42,9 @@ class SDN_Gym(gym.Env):
         self.sla = 200
         self.previous_load = [0,0,0,0,0]
 
+        self.previous_5_loadsum = [0,0,0,0,0]
+        self.previous_5_counter = 0
+
         #loading partial signature dec tree model
         filename = 'partial_sig.sav'
         self.dec_tree = pickle.load(open(filename, 'rb'))
@@ -86,6 +89,10 @@ class SDN_Gym(gym.Env):
         self.reward = self._get_reward(action)
         self.sum_rewards += self.reward
 
+        if(self.previous_5_counter >=5):
+            self.previous_5_counter = 0
+            self.previous_5_loadsum = [0,0,0,0,0]
+
         if self.turns > 100:
             self.episode_over = True
 
@@ -100,6 +107,9 @@ class SDN_Gym(gym.Env):
         self.ob = self._get_initial_state()
         self.episode_over = False
         self.sum_rewards = 0.0
+        self.previous_5_loadsum = 0
+        self.previous_5_counter = 0
+
         return self.ob
 
     def _take_action(self, action):
@@ -109,11 +119,11 @@ class SDN_Gym(gym.Env):
         :return:
         """
         if(action == 1): #queue flow
-            self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
+            self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,actions=output:3')
         elif(action == 2): #send flow to IDS
-            self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:4')
+            self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,actions=output:4')
         else: #normal forward to server
-            self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:2')
+            self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,actions=output:2')
 
 
     def _get_reward(self,action):
@@ -124,7 +134,7 @@ class SDN_Gym(gym.Env):
         #collecting parameters from flow
         reward = 10
         total_load = self.ob[0] + self.ob[1] + self.ob[2] + self.ob[3] + self.ob[4]
-        flow_rate_user = self.ob[0] / 2 #2 second intervals
+        flow_rate_user = (self.previous_5_loadsum[0]/10) #2 second intervals
         # sec_viol = self.dec_tree.predict(np.array([flow_rate_user,flow_rate_user]).reshape(1,-1))
         sec_viol = self.dec_tree.predict([[flow_rate_user]])
 
@@ -132,7 +142,7 @@ class SDN_Gym(gym.Env):
         if(flow_rate_user == 0):
             sec_viol[0] = 'NULL'
 
-        print(sec_viol[0], flow_rate_user)
+        #print(sec_viol[0], flow_rate_user)
 
         if(action != 2): #not being sent to IDS.. not security violation detected
             #if server is overloaded
@@ -168,10 +178,16 @@ class SDN_Gym(gym.Env):
         """
         curr_state = self.ob
         load = self.mn_backend.get_serverload(self.curr_net)
-        print(load)
+        #print(load)
 
+        #getting next state
         next_state = (load[0] - self.previous_load[0],load[1] - self.previous_load[1],load[2] - self.previous_load[2],load[3] - self.previous_load[3],load[4] - self.previous_load[4])
         self.previous_load = load
+
+        #for calculating rate
+        self.previous_5_loadsum = np.add(self.previous_5_loadsum,next_state)
+        self.previous_5_counter +=1
+
         return next_state
 
     def _get_initial_state(self):
