@@ -3,6 +3,8 @@ import random
 from gym import error, spaces, utils
 from gym.utils import seeding
 import time
+import pickle
+import numpy as np
 
 import sys
 #sys.path.append("/usr/lib/python2.7/dist-packages/")
@@ -38,6 +40,10 @@ class SDN_Gym(gym.Env):
         #thresholds
         self.server_thresh = 10000
         self.sla = 200
+
+        #loading partial signature dec tree model
+        filename = 'partial_sig.sav'
+        self.dec_tree = pickle.load(open(filename, 'rb'))
 
     def _step(self, action):
         """
@@ -114,7 +120,11 @@ class SDN_Gym(gym.Env):
         #collecting parameters from flow
         reward = 10
         total_load = self.ob[0] + self.ob[1] + self.ob[2] + self.ob[3] + self.ob[4]
-        flow_rate_user = self.ob[0] / 10
+        flow_rate_user = self.ob[0] / 2
+        # sec_viol = self.dec_tree.predict(np.array([flow_rate_user,flow_rate_user]).reshape(1,-1))
+        sec_viol = self.dec_tree.predict([[flow_rate_user]])
+        print(sec_viol)
+        print(sec_viol[0])
 
         if(action != 2): #not being sent to IDS.. not security violation detected
             #if server is overloaded
@@ -133,10 +143,10 @@ class SDN_Gym(gym.Env):
             #do sla for other users
 
             #security policy violation but not being sent to IDS (true negative)
-            if(flow_rate_user > 0.798731): #HULK DOS Attack partial signature match
+            if(sec_viol == 'Malicious'): #Attack partial signature match
                 reward = reward - 500
         else:
-            if (flow_rate_user > 0.798731):  # HULK DOS Attack partial signature match
+            if (sec_viol == 'Malicious'):  # Attack partial signature match
                 reward = reward + 500 #correctly sending to verify at IDS
             else:
                 reward = reward - 500 #false positive

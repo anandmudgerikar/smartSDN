@@ -5,6 +5,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
+import pickle
 from sklearn import preprocessing
 
 
@@ -27,10 +28,7 @@ def importdata():
     # Printing the dataset obseravtions
     print("Dataset: ", balance_data.head())
 
-
-
     return balance_data
-
 
 # split the dataset
 def splitdataset(balance_data):
@@ -65,6 +63,10 @@ def train(X_train, y_train):
     # Performing training
     dec_tree.fit(X_train, y_train)
     print("Training complete")
+
+    #save dec tree model
+    filename = 'partial_sig.sav'
+    pickle.dump(dec_tree, open(filename, 'wb'))
     return dec_tree
 
 # Function to make predictions
