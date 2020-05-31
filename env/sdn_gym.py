@@ -40,10 +40,14 @@ class SDN_Gym(gym.Env):
         #thresholds
         self.server_thresh = 10000
         self.sla = 200
+        self.previous_load = [0,0,0,0,0]
 
         #loading partial signature dec tree model
         filename = 'partial_sig.sav'
         self.dec_tree = pickle.load(open(filename, 'rb'))
+
+        #sleeping as flows start after 300 seconds in replays
+        #time.sleep(300)
 
     def _step(self, action):
         """
@@ -120,11 +124,15 @@ class SDN_Gym(gym.Env):
         #collecting parameters from flow
         reward = 10
         total_load = self.ob[0] + self.ob[1] + self.ob[2] + self.ob[3] + self.ob[4]
-        flow_rate_user = self.ob[0] / 2
+        flow_rate_user = self.ob[0] / 2 #2 second intervals
         # sec_viol = self.dec_tree.predict(np.array([flow_rate_user,flow_rate_user]).reshape(1,-1))
         sec_viol = self.dec_tree.predict([[flow_rate_user]])
-        print(sec_viol)
-        print(sec_viol[0])
+
+        #dealing with zero load case
+        if(flow_rate_user == 0):
+            sec_viol[0] = 'NULL'
+
+        print(sec_viol[0], flow_rate_user)
 
         if(action != 2): #not being sent to IDS.. not security violation detected
             #if server is overloaded
@@ -143,10 +151,10 @@ class SDN_Gym(gym.Env):
             #do sla for other users
 
             #security policy violation but not being sent to IDS (true negative)
-            if(sec_viol == 'Malicious'): #Attack partial signature match
+            if(sec_viol[0] == 'Malicious'): #Attack partial signature match
                 reward = reward - 500
         else:
-            if (sec_viol == 'Malicious'):  # Attack partial signature match
+            if (sec_viol[0] == 'Malicious'):  # Attack partial signature match
                 reward = reward + 500 #correctly sending to verify at IDS
             else:
                 reward = reward - 500 #false positive
@@ -160,8 +168,10 @@ class SDN_Gym(gym.Env):
         """
         curr_state = self.ob
         load = self.mn_backend.get_serverload(self.curr_net)
+        print(load)
 
-        next_state = (load[0] - curr_state[0],load[1] - curr_state[1],load[2] - curr_state[2],load[3] - curr_state[3],load[4] - curr_state[4])
+        next_state = (load[0] - self.previous_load[0],load[1] - self.previous_load[1],load[2] - self.previous_load[2],load[3] - self.previous_load[3],load[4] - self.previous_load[4])
+        self.previous_load = load
         return next_state
 
     def _get_initial_state(self):

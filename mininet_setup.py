@@ -82,14 +82,14 @@ class Mininet_Backend():
 
     def replay_flows(self,net):
         # Replaying packets from pcaps
-        print("replaying flow from user1")
+        print("replaying flow from users")
         #print(net.getNodeByName('h1').cmd('tcpreplay -i h1-eth0 pcaps/ &'))
-        net.getNodeByName('h1').cmd('tcpreplay -i h1-eth0 pcaps/user1_linux.pcap &')
-        net.getNodeByName('h2').cmd('tcpreplay -i h1-eth0 pcaps/user2_win10.pcap &')
-        net.getNodeByName('h3').cmd('tcpreplay -i h1-eth0 pcaps/user3_mac.pcap &')
-        net.getNodeByName('h4').cmd('tcpreplay -i h1-eth0 pcaps/user4_win7.pcap &')
+        net.getNodeByName('h1').cmd('tcpreplay -x 0.5 -i h1-eth0 pcaps/user1_linux.pcap &')
+        net.getNodeByName('h2').cmd('tcpreplay -x 0.5 -i h2-eth0 pcaps/user2_win10.pcap &')
+        net.getNodeByName('h3').cmd('tcpreplay -x 0.5 -i h3-eth0 pcaps/user3_mac.pcap &')
+        net.getNodeByName('h4').cmd('tcpreplay -x 0.5 -i h4-eth0 pcaps/user4_win7.pcap &')
 
-        net.getNodeByName('h5').cmd('tcpreplay -i h1-eth0 pcaps/attacker_kali.pcap &')
+        net.getNodeByName('h5').cmd('tcpreplay -x 0.5 -i h5-eth0 pcaps/attacker_kali.pcap &')
 
     def get_serverload(self,net):
         #get server load from each flow
@@ -125,15 +125,18 @@ if __name__ == '__main__':
     mn_backend = Mininet_Backend()
     curr_net = mn_backend.startTest()
     mn_backend.replay_flows(curr_net)
+    #time.sleep(300)
 
-    #sleeping for flows to populate
-    print("sleeping")
-    time.sleep(50)
+    for i in range(1000):
+        #sleeping for flows to populate
+        #print("sleeping")
+        time.sleep(2)
 
-    #printing all flows for testing
-    flows = curr_net.getNodeByName('s1').cmd('ovs-ofctl dump-flows s1')
-    print(flows)
+        #printing all flows for testing
+        flows = curr_net.getNodeByName('s1').cmd('ovs-ofctl dump-flows s1')
+        #print(flows)
 
-    #printing server loads from each user
-    print("Current server load from users:"+str(mn_backend.get_serverload(curr_net)))
+        #printing server loads from each user
+        print("Current server load from users:"+str(mn_backend.get_serverload(curr_net)))
+
     mn_backend.stop_test(curr_net)
