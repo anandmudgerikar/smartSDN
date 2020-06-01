@@ -41,6 +41,7 @@ class SDN_Gym(gym.Env):
         self.server_thresh = 10000
         self.sla = 200
         self.previous_load = [0,0,0,0,0]
+        self.queue_load = [0,0,0,0,0]
 
         self.previous_5_loadsum = [0,0,0,0,0]
         self.previous_5_counter = 0
@@ -85,7 +86,7 @@ class SDN_Gym(gym.Env):
         self._take_action(action)
 
         self.turns += 1
-        self.ob = self._get_new_state()
+        self.ob = self._get_new_state(action)
         self.reward = self._get_reward(action)
         self.sum_rewards += self.reward
 
@@ -169,9 +170,15 @@ class SDN_Gym(gym.Env):
             else:
                 reward = reward - 500 #false positive
 
+        # if(self.queue_load[0] > 0): #existing queue load
+        #     if(self.ob[0] == 0): #no current load on server
+        #         if(action == 0): #unque
+        #             reward += 50
+        #         elif(action == 1):
+        #             reward -= 50
         return reward
 
-    def _get_new_state(self):
+    def _get_new_state(self,action):
         """
         Get the next state from current state
         :return:
@@ -188,7 +195,19 @@ class SDN_Gym(gym.Env):
         self.previous_5_loadsum = np.add(self.previous_5_loadsum,next_state)
         self.previous_5_counter +=1
 
+        #for queue calculating
+        if(action == 1): #queing
+            self.queue_load[0] += next_state[0]
+        elif(action == 0): #normal forwarding
+            if(next_state[0] == 0): #no current load
+                self.queue_load[0] -= self.server_thresh
+                self.queue_load[0] = max(self.queue_load[0],0) #removing negative load
+            else:
+                leftover = max(next_state[0]-self.server_thresh,0)
+                self.queue_load += leftover
+
         return next_state
+
 
     def _get_initial_state(self):
         return (0, 0, 0, 0, 0)

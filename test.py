@@ -8,7 +8,7 @@ from env.sdn_gym import SDN_Gym
 env = gym.make('sdn-v0')
 
 env.reset()
-action = (0,0,0,0,0)
+action = 2
 
 filename = 'partial_sig.sav'
 dec_tree = pickle.load(open(filename, 'rb'))
