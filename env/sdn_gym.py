@@ -196,15 +196,15 @@ class SDN_Gym(gym.Env):
         self.previous_5_counter +=1
 
         #for queue calculating
-        if(action == 1): #queing
-            self.queue_load[0] += next_state[0]
-        elif(action == 0): #normal forwarding
-            if(next_state[0] == 0): #no current load
-                self.queue_load[0] -= self.server_thresh
-                self.queue_load[0] = max(self.queue_load[0],0) #removing negative load
-            else:
-                leftover = max(next_state[0]-self.server_thresh,0)
-                self.queue_load += leftover
+        # if(action == 1): #queing
+        #     self.queue_load[0] += next_state[0]
+        # elif(action == 0): #normal forwarding
+        #     if(next_state[0] == 0): #no current load
+        #         self.queue_load[0] -= self.server_thresh
+        #         self.queue_load[0] = max(self.queue_load[0],0) #removing negative load
+        #     else:
+        #         leftover = max(next_state[0]-self.server_thresh,0)
+        #         self.queue_load += leftover
 
         return next_state
 
