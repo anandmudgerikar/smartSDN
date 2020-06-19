@@ -17,16 +17,18 @@ step_counter = 0
 prev_ob = []
 prev_ob_counter = 0
 
-for i in range(1500):
-    observation, reward, done, info = env.step(action)
+for user in range(4):
 
-    prev_ob.append(observation[4])
+    env.reset()
+    for i in range(1500):
+        observation, reward, done, info = env.step(action)
+        prev_ob.append(observation[user])
 
-    if(len(prev_ob) == 6):
-        prev_ob.pop(0)
+        if(len(prev_ob) == 6):
+            prev_ob.pop(0)
 
-    if(prev_ob != [0,0,0,0,0]):
-        print(i*2,prev_ob)
+        if(prev_ob != [0,0,0,0,0]):
+            print(i*2,prev_ob)
 
     # if(i== (552/2)):
 

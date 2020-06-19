@@ -111,6 +111,13 @@ class SDN_Gym(gym.Env):
         self.previous_5_loadsum = 0
         self.previous_5_counter = 0
 
+        #stopping mininet
+        self.mn_backend.stop_test(self.curr_net)
+
+        # starting mininet setup
+        self.curr_net = self.mn_backend.startTest()
+        self.mn_backend.replay_flows(self.curr_net)
+
         return self.ob
 
     def _take_action(self, action):

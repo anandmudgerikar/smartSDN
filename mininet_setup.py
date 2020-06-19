@@ -94,7 +94,7 @@ class Mininet_Backend():
 
         #attacker flows
         #net.getNodeByName('h5').cmd('tcpreplay -i h5-eth0 pcaps/attacker1_kali.pcap &')
-        net.getNodeByName('h5').cmd('tcpreplay -i h5-eth0 pcaps/attacker_sl_sht_dos.pcap &')
+        net.getNodeByName('h5').cmd('tcpreplay -i h5-eth0 pcaps/attacker1_kali.pcap &')
 
     def get_serverload(self,net):
         #get server load from each flow
