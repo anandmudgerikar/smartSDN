@@ -110,6 +110,7 @@ class SDN_Gym(gym.Env):
         self.sum_rewards = 0.0
         self.previous_5_loadsum = 0
         self.previous_5_counter = 0
+        self.previous_load = [0, 0, 0, 0, 0]
 
         #stopping mininet
         self.mn_backend.stop_test(self.curr_net)

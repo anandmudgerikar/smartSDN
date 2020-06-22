@@ -17,10 +17,14 @@ step_counter = 0
 prev_ob = []
 prev_ob_counter = 0
 
-for user in range(4):
+for user in range(3,4):
 
     env.reset()
-    for i in range(1500):
+    prev_ob = [0,0,0,0,0]
+
+    print("Working for User ",user)
+
+    for i in range(15000):
         observation, reward, done, info = env.step(action)
         prev_ob.append(observation[user])
 
@@ -29,6 +33,9 @@ for user in range(4):
 
         if(prev_ob != [0,0,0,0,0]):
             print(i*2,prev_ob)
+
+        if(i>6000 and i < 6005):
+            print(env.curr_net.getNodeByName('s1').cmd('ovs-ofctl dump-flows s1'))
 
     # if(i== (552/2)):
 

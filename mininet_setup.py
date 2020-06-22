@@ -57,10 +57,10 @@ class Mininet_Backend():
 
         #adding flows for calculating server load and per flow server load
         #normal flow forwarding: for users 1-4 to server
-        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,actions=output:2')
-        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.14,nw_dst=192.168.10.50,ip,actions=output:2')
-        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.25,nw_dst=192.168.10.50,ip,actions=output:2')
-        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.9,nw_dst=192.168.10.50,ip,actions=output:2')
+        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=10000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,actions=output:2')
+        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=10000,priority=60000,nw_src=192.168.10.14,nw_dst=192.168.10.50,ip,actions=output:2')
+        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=10000,priority=60000,nw_src=192.168.10.25,nw_dst=192.168.10.50,ip,actions=output:2')
+        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=10000,priority=60000,nw_src=192.168.10.9,nw_dst=192.168.10.50,ip,actions=output:2')
         #queue flow to load balance
         #net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 add-flow s1 idle_timeout=1000,priority=30000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
         #forward malcicious looking flow to IDS
@@ -71,7 +71,7 @@ class Mininet_Backend():
 
         #testing modifying flows for actions in RL
         #modifying flow to queue from normal forwarding
-        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,actions=output:3')
+        net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=10000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,actions=output:3')
         # net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.14,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
         # net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.25,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
         # net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.9,nw_dst=192.168.10.50,ip,tp_dst=21,actions=output:3')
@@ -87,10 +87,10 @@ class Mininet_Backend():
         # Replaying packets from pcaps
         print("replaying flow from users")
         #print(net.getNodeByName('h1').cmd('tcpreplay -i h1-eth0 pcaps/ &'))
-        net.getNodeByName('h1').cmd('tcpreplay  -i h1-eth0 pcaps/user1_linux.pcap &')  #-x 0.5 throttling speed by half, -M 2 mbps 2
-        net.getNodeByName('h2').cmd('tcpreplay  -i h2-eth0 pcaps/user2_win10.pcap &')
-        net.getNodeByName('h3').cmd('tcpreplay  -i h3-eth0 pcaps/user3_mac.pcap &')
-        net.getNodeByName('h4').cmd('tcpreplay  -i h4-eth0 pcaps/user4_win7.pcap &')
+        net.getNodeByName('h1').cmd('tcpreplay  -i h1-eth0 pcaps/linux_user1.pcap &')  #-x 0.5 throttling speed by half, -M 2 mbps 2
+        net.getNodeByName('h2').cmd('tcpreplay  -i h2-eth0 pcaps/win10_user2.pcap &')
+        net.getNodeByName('h3').cmd('tcpreplay  -i h3-eth0 pcaps/mac_user3.pcap &')
+        net.getNodeByName('h4').cmd('tcpreplay  -i h4-eth0 pcaps/win7_user4_tcp.pcap &')
 
         #attacker flows
         #net.getNodeByName('h5').cmd('tcpreplay -i h5-eth0 pcaps/attacker1_kali.pcap &')
