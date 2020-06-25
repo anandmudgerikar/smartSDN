@@ -24,7 +24,7 @@ class SDN_Gym(gym.Env):
 
     def __init__(self):
 
-        self.action_space = spaces.Discrete(3)
+        self.action_space = spaces.Discrete(2) #for security only testing n=2, allow/drop, for jarvis n=3, allow/drop/queue
         self.observation_space = spaces.MultiDiscrete([100, 100, 100, 100, 100])
         self.ob = self._get_initial_state()
         self.episode_over = False
@@ -83,11 +83,15 @@ class SDN_Gym(gym.Env):
         #each step is taken after 60 seconds
         time.sleep(2)
         #perform action
-        self._take_action(action)
+        #self._take_action(action) #for jarvis
+        self._take_action_sec(action) #for sec analysis
 
         self.turns += 1
         self.ob = self._get_new_state(action)
-        self.reward = self._get_reward(action)
+
+        #self.reward = self._get_reward(action) #for jarvis
+        self.reward = self._get_reward_sec(action)
+
         self.sum_rewards += self.reward
 
         if(self.previous_5_counter >=5):
@@ -134,6 +138,18 @@ class SDN_Gym(gym.Env):
         else: #normal forward to server
             self.curr_net.getNodeByName('s1').cmd('ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=192.168.10.19,nw_dst=192.168.10.50,ip,actions=output:2')
 
+    def _take_action_sec(self, action):
+        """
+        Take an action correpsonding to action_index in the current state
+        :param action_index:
+        :return:
+        """
+        if (action == 1):  # drop
+            self.curr_net.getNodeByName('s1').cmd(
+                'ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=172.16.0.1,nw_dst=192.168.10.50,ip,actions=output:3')
+        else:  # allow
+            self.curr_net.getNodeByName('s1').cmd(
+                'ovs-ofctl --protocols=OpenFlow13 mod-flows s1 idle_timeout=1000,priority=60000,nw_src=172.16.0.1,nw_dst=192.168.10.50,ip,actions=output:2')
 
     def _get_reward(self,action):
         """
@@ -184,6 +200,11 @@ class SDN_Gym(gym.Env):
         #             reward += 50
         #         elif(action == 1):
         #             reward -= 50
+        return reward
+
+    def _get_reward_sec(action):
+
+
         return reward
 
     def _get_new_state(self,action):
