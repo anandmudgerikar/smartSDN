@@ -1,14 +1,20 @@
 import numpy as np
 import pandas as pd
+from keras.utils import to_categorical
 from sklearn.metrics import confusion_matrix
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
 import pickle
 from sklearn import preprocessing
-
+from collections import deque
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.optimizers import Adam
+import random
 
 # importing Dataset (known attack signatures)
 def importdata():
@@ -82,19 +88,37 @@ def train(X_train, y_train):
     pickle.dump(dec_tree, open(filename, 'wb'))
     return dec_tree
 
+def train_dnn(X_train,y_train):
+
+    model = Sequential()
+    model.add(Dense(5, input_dim=5, activation='relu'))
+    model.add(Dense(10, activation='relu'))
+    model.add(Dense(40, activation='relu'))
+    model.add(Dense(2, activation='softmax'))
+    model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam(lr=0.001))
+
+    #minibatch = random.sample((X_train,y_train),50)
+
+    model.fit(X_train,y_train,epochs=100)
+    return model
+
 # Function to make predictions
 def prediction(X_test, clf_object):
     # Predicton on test with giniIndex
     y_pred = clf_object.predict(X_test)
     print("Predicted values:")
-    #print(y_pred)
-    return y_pred
+    print(y_pred)
+    print(np.argmax(y_pred,axis=1))
+
+
+    return np.argmax(y_pred,axis=1)
 
 
 # Function to calculate accuracy
 def cal_accuracy(y_test, y_pred):
-    print("Confusion Matrix: ",
-          confusion_matrix(y_test, y_pred))
+    print(y_pred)
+    print(y_test)
+    print("Confusion Matrix: ",confusion_matrix(y_test, y_pred))
 
     print("Accuracy : ",
           accuracy_score(y_test, y_pred) * 100)
@@ -124,14 +148,40 @@ def main():
 
     #Using testing dataset
     X, Y, X_train, X_test, y_train, y_test = datagen(data,test_data)
-    dec_tree = train(X_train, y_train)
+    # dec_tree = train(X_train, y_train)
+
+    #DNNS
+    le = LabelEncoder()
+    le.fit(y_train)
+    y_train = le.transform(y_train)
+    y_test = le.transform(y_test)
+
+    y_orig = y_test
+
+    y_test = to_categorical(y_test)
+    y_train = to_categorical(y_train)
+
+    print(y_train)
+
+
+    dec_tree = train_dnn(X_train, y_train)
+
+    pred_train = dec_tree.predict(X_train)
+    scores = dec_tree.evaluate(X_train, y_train, verbose=0)
+    print('Accuracy on training data: {}% \n Error on training data: {}'.format(scores[1], 1 - scores[1]))
+
+    pred_test = dec_tree.predict(X_test)
+    scores2 = dec_tree.evaluate(X_test, y_test, verbose=0)
+    print('Accuracy on test data: {}% \n Error on test data: {}'.format(scores2[1], 1 - scores2[1]))
 
     # Operational Phase
     print("Results:")
 
+
+
     # Prediction
     y_pred = prediction(X_test, dec_tree)
-    cal_accuracy(y_test, y_pred)
+    cal_accuracy(y_orig, y_pred)
 
 # Calling main function
 if __name__ == "__main__":
