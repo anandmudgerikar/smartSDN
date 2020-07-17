@@ -32,6 +32,7 @@ def splitdataset(balance_data):
     X = balance_data.values[:, 0:77]
     Y = balance_data.values[:, 78]
 
+
     #normalizing nan values to max float32
     X = np.nan_to_num(X.astype(np.float32))
 

@@ -14,6 +14,7 @@ from collections import deque
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
+from keras.layers import LSTM, Dense, Dropout, Masking, Embedding
 import random
 
 # importing Dataset (known attack signatures)
@@ -70,7 +71,7 @@ def splitdataset(balance_data):
     return X, Y, X_train, X_test, y_train, y_test
 
 
-def train(X_train, y_train):
+def train_forest(X_train, y_train):
     # Creating the Decision Tree classifier object
 
     ##dec tree classifier
@@ -90,9 +91,10 @@ def train(X_train, y_train):
 
 def train_dnn(X_train,y_train):
 
+    #DNN
     model = Sequential()
-    model.add(Dense(5, input_dim=5, activation='relu'))
-    model.add(Dense(10, activation='relu'))
+    model.add(Dense(64, input_dim=5, activation='relu'))
+    model.add(Dense(128, activation='relu'))
     model.add(Dense(40, activation='relu'))
     model.add(Dense(2, activation='softmax'))
     model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam(lr=0.001))
@@ -100,6 +102,47 @@ def train_dnn(X_train,y_train):
     #minibatch = random.sample((X_train,y_train),50)
 
     model.fit(X_train,y_train,epochs=100)
+    return model
+
+def train_rnn(X_train,y_train):
+
+    #RNN
+    model = Sequential()
+    # model.add(Dense(64, input_dim=5, activation='relu'))
+    #
+    # model.add(Masking(mask_value=0))
+
+    # Recurrent layer
+    model.add(LSTM(64, return_sequences=False,
+                   dropout=0.1, recurrent_dropout=0.1,input_shape=(5,1)))
+
+    # Fully connected layer
+    model.add(Dense(64, activation='relu'))
+    model.add(Dense(20, activation='relu'))
+
+    # Dropout for regularization
+    model.add(Dropout(0.5))
+
+    # Output layer
+    model.add(Dense(2, activation='softmax'))
+
+    model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam(lr=0.001))
+
+    ##DNN
+    # model = Sequential()
+    # model.add(Dense(5, input_dim=5, activation='relu'))
+    # model.add(Dense(10, activation='relu'))
+    # model.add(Dense(40, activation='relu'))
+    # model.add(Dense(2, activation='softmax'))
+    # model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam(lr=0.001))
+
+    #minibatch = random.sample((X_train,y_train),50)
+
+    X_train = np.reshape(X_train, (3966, 5, 1))
+    #y_train = np.reshape(y_train,(3966,5,2))
+    print(y_train.shape)
+
+    model.fit(X_train,y_train,epochs=100,batch_size=162)
     return model
 
 # Function to make predictions
@@ -113,6 +156,12 @@ def prediction(X_test, clf_object):
 
     return np.argmax(y_pred,axis=1)
 
+def prediction_forest(X_test, clf_object):
+    # Predicton on test with giniIndex
+    y_pred = clf_object.predict(X_test)
+    print("Predicted values:")
+    print(y_pred)
+    return y_pred
 
 # Function to calculate accuracy
 def cal_accuracy(y_test, y_pred):
@@ -157,7 +206,7 @@ def main():
     y_test = le.transform(y_test)
 
     y_orig = y_test
-
+    #
     y_test = to_categorical(y_test)
     y_train = to_categorical(y_train)
 
@@ -165,6 +214,9 @@ def main():
 
 
     dec_tree = train_dnn(X_train, y_train)
+
+    # X_train = np.reshape(X_train, (3966, 5, 1))
+    # X_test = np.reshape(X_test, (2927, 5, 1))
 
     pred_train = dec_tree.predict(X_train)
     scores = dec_tree.evaluate(X_train, y_train, verbose=0)
