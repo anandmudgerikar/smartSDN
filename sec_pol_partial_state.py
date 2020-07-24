@@ -102,6 +102,7 @@ def train_dnn(X_train,y_train):
     #minibatch = random.sample((X_train,y_train),50)
 
     model.fit(X_train,y_train,epochs=100)
+    print(model.evaluate())
     return model
 
 def train_rnn(X_train,y_train):
