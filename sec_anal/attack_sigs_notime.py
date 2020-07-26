@@ -16,6 +16,7 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 from keras.layers import LSTM, Dense, Dropout, Masking, Embedding
 import random
+from tensorflow import keras
 
 
 # importing Dataset (from pcap parser: known attacks)
@@ -69,6 +70,10 @@ def splitdataset(balance_data):
     return X, Y, X_train, X_test, y_train, y_test
 
 
+def train_rl(X_train,y_train):
+    reconstructed_model = keras.models.load_model("../rl_model")
+    return reconstructed_model
+
 def train_forest(X_train, y_train):
     # Creating the Decision Tree classifier object
     dec_tree = DecisionTreeClassifier()
@@ -86,15 +91,15 @@ def train_dnn(X_train,y_train):
 
     #DNN
     model = Sequential()
-    model.add(Dense(64, input_dim=4, activation='relu'))
-    model.add(Dense(512, activation='relu'))
+    model.add(Dense(1024, input_dim=4, activation='relu'))
     model.add(Dense(1024, activation='relu'))
+    #model.add(Dense(1024, activation='relu'))
     model.add(Dense(2, activation='softmax'))
-    model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam(lr=0.001))
+    model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam(lr=0.001,decay=0.001))
 
     #minibatch = random.sample((X_train,y_train),50)
 
-    model.fit(X_train,y_train,epochs=100)
+    model.fit(X_train,y_train,epochs=50)
     return model
 
 # Function to make predictions
@@ -159,15 +164,15 @@ def main():
     print(y_train)
     print(y_orig)
 
-    #dec_tree = train_forest(X_train,y_train)
-    dec_tree = train_dnn(X_train,y_train)
+    dec_tree = train_rl(X_train,y_train)
+    #dec_tree = train_dnn(X_train,y_train)
 
     # Operational Phase
     print("Results:")
 
-    ##adding noise for robustness testing
-    noise = np.random.normal(0, 20, X_test.shape)
-    X_test += noise.round()
+    # ##adding noise for robustness testing
+    # noise = np.random.normal(0, 20, X_test.shape)
+    # X_test += noise.round()
 
     #for dnn only
     #dnn_scores(X_train,y_train,X_test,y_test,dec_tree)

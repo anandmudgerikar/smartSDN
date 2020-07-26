@@ -202,10 +202,10 @@ class SDN_Gym(gym.Env):
         #             reward -= 50
         return reward
 
-    def _get_reward_sec(action):
-
-
-        return reward
+    # def _get_reward_sec(action):
+    #
+    #
+    #     return reward
 
     def _get_new_state(self,action):
         """

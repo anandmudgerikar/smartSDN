@@ -15,6 +15,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
 from keras.layers import LSTM, Dense, Dropout, Masking, Embedding
+from tensorflow import keras
 import random
 
 # importing Dataset (known attack signatures)
@@ -104,6 +105,7 @@ def train_dnn(X_train,y_train):
     model.fit(X_train,y_train,epochs=100)
     print(model.evaluate())
     return model
+
 
 def train_rnn(X_train,y_train):
 
