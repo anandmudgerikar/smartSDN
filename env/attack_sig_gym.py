@@ -93,15 +93,23 @@ class Attack_Sig_Gym(gym.Env):
         """
         Get reward for the action taken in the current state
         :return:
+        v1 = fpr = 100 , tnr=100
+        v2 : fpr=10*bytes_forward, tnr = 2*bytes_forward
+        v2 : fpr=10*bytes_forward, tnr = 10*bytes_forward
         """
-        reward = 10
+        reward = 0
 
         if(action == 0): #allow
-            if(self.data.values[self.turns,4] == "Malicious"): #true negative
-                reward -= self.ob[0] #no of malicious packets going through
+            if(self.data.values[self.turns,4] == "Malicious"): #true neg
+                reward -= (10*self.ob[1]) #no of malicious packets going through
+
+            else:
+                reward +=50 #false negative
         else:
             if(self.data.values[self.turns,4] == "Benign"): #false positive
-                reward -= 100 #no of benign packets getting dropped
+                reward -= (10*self.ob[1]) #no of benign packets getting dropped
+            else:
+                reward += 50 #true positive
         return reward
 
     def _get_new_state(self,action):

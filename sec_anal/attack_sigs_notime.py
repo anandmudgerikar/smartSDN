@@ -23,7 +23,7 @@ from tensorflow import keras
 def importdata():
     balance_data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_train.csv",sep=',', header=0)
 
-    test_data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_test.csv",sep=',', header=0)
+    test_data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test1_2sec.csv",sep=',', header=0)
 
     # # removing na and normalizing with mean
     # balance_data.fillna(balance_data.mean())
@@ -71,7 +71,7 @@ def splitdataset(balance_data):
 
 
 def train_rl(X_train,y_train):
-    reconstructed_model = keras.models.load_model("../rl_model")
+    reconstructed_model = keras.models.load_model("../rl_model_v3")
     return reconstructed_model
 
 def train_forest(X_train, y_train):
@@ -120,6 +120,15 @@ def prediction_dnn(X_test, clf_object):
     #return y_pred
     return np.argmax(y_pred,axis=1)
 
+def prediction_rl(X_test,clf_object):
+    # Predicton on test with giniIndex
+    y_pred = clf_object.predict(X_test)
+    print("Predicted values:")
+    print(y_pred)
+    print(np.argmax(y_pred, axis=1))
+
+    # return y_pred
+    return np.argmax(y_pred, axis=1)
 
 # Function to calculate accuracy
 def cal_accuracy(y_test, y_pred):
@@ -177,10 +186,10 @@ def main():
     #for dnn only
     #dnn_scores(X_train,y_train,X_test,y_test,dec_tree)
 
-    print(X_test)
+    #print(X_test)
     # Prediction
     y_pred = prediction_dnn(X_test, dec_tree)
-    cal_accuracy(y_orig, y_pred)
+    cal_accuracy(y_orig, y_pred[)
 
 # Calling main function
 if __name__ == "__main__":

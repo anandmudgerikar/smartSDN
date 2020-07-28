@@ -32,7 +32,7 @@ class DQNAgent:
         self.gamma = 0.95    # discount rate
         self.epsilon = 1.0  # exploration rate
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.995
+        self.epsilon_decay = 0.999
         self.learning_rate = 0.001
         self.model = self._build_model()
 
@@ -40,7 +40,7 @@ class DQNAgent:
         # Neural Net for Deep-Q learning Model
         model = Sequential()
         model.add(Dense(128,input_dim=self.state_size, activation='relu'))
-        #model.add(Dense(1024, activation='relu'))
+        model.add(Dense(128, activation='relu'))
         model.add(Dense(self.action_size, activation='linear'))
         model.compile(loss='mse',optimizer=Adam(lr=self.learning_rate))
         return model
@@ -83,11 +83,11 @@ class DQNAgent:
 
     def save(self, name):
         #self.model.save_weights(name)
-        self.model.save("rl_model")
+        self.model.save(name)
 
 # Q, stats = qLearning(env, 1000)
 
-EPISODES = 5000
+EPISODES = 600
 print()
 state_size = len(env.observation_space.spaces)
 action_size = env.action_space.n
@@ -95,7 +95,7 @@ print("state and action sizes are:"+str(state_size)+","+str(action_size))
 agent = DQNAgent(state_size, action_size)
 # agent.load("./save/cartpole-dqn.h5")
 done = False
-batch_size =500
+batch_size =200
 avg = 0
 
 for e in range(EPISODES):
@@ -114,7 +114,7 @@ for e in range(EPISODES):
             print("episode: {}/{}, score: {}, e: {:.2f}"
                   .format(e, EPISODES, env.sum_rewards, agent.epsilon))
             avg += env.sum_rewards
-            agent.save("rl_model")
+            agent.save("rl_model_v3")
             break
         if len(agent.memory) > batch_size:
             loss = agent.replay(batch_size)
