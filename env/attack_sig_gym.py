@@ -93,23 +93,33 @@ class Attack_Sig_Gym(gym.Env):
         """
         Get reward for the action taken in the current state
         :return:
+        Fine tuning versions:
         v1 = fpr = 100 , tnr=100
         v2 : fpr=10*bytes_forward, tnr = 2*bytes_forward
-        v2 : fpr=10*bytes_forward, tnr = 10*bytes_forward
+        v3 : fpr=10*bytes_forward, tnr = 10*bytes_forward
+        v4 : more exploration 0.2
+        v5 : more exploration 0.2, fpr=bytes_forward, tnr = bytes_forward
+        v6 : more exploration 0.2, fpr=bytes_forward, tnr = 10*bytes_forward
+        v7: more exploration 0.2, fpr=bytes_forward, tnr = 10*bytes_forward, +ve reward = 500
+         v8: more exploration 0.2, fpr=pckts_forward*5, tnr = pckts_forward
+         v8: more exploration 0.2, fpr=pckts_forward*5, tnr = pckts_forward
+         v9: more exploration 0.2, fpr=pckts_forward, tnr = pckts_forward
+         v10: more exploration 0.2, fpr=pckts_forward, tnr = pckts_forward,  +ve reward = 500
+         v11: more exploration 0.2, fpr=pckts_forward*2, tnr = pckts_forward,  +ve reward = 1000
+         v12: more exploration 0.2, fpr=pckts_forward, tnr = pckts_forward,  +ve reward = 1000
         """
         reward = 0
 
         if(action == 0): #allow
             if(self.data.values[self.turns,4] == "Malicious"): #true neg
-                reward -= (10*self.ob[1]) #no of malicious packets going through
-
+                reward -= (self.ob[0]) #no of malicious packets going through
             else:
-                reward +=50 #false negative
+                reward +=1000 #false negative
         else:
             if(self.data.values[self.turns,4] == "Benign"): #false positive
-                reward -= (10*self.ob[1]) #no of benign packets getting dropped
+                reward -= (self.ob[0]) #no of benign packets getting dropped
             else:
-                reward += 50 #true positive
+                reward += 1000 #true positive
         return reward
 
     def _get_new_state(self,action):

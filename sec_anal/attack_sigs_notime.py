@@ -71,7 +71,7 @@ def splitdataset(balance_data):
 
 
 def train_rl(X_train,y_train):
-    reconstructed_model = keras.models.load_model("../rl_model_v3")
+    reconstructed_model = keras.models.load_model("../rl_model_v11")
     return reconstructed_model
 
 def train_forest(X_train, y_train):
@@ -189,7 +189,7 @@ def main():
     #print(X_test)
     # Prediction
     y_pred = prediction_dnn(X_test, dec_tree)
-    cal_accuracy(y_orig, y_pred[)
+    cal_accuracy(y_orig, y_pred)
 
 # Calling main function
 if __name__ == "__main__":
