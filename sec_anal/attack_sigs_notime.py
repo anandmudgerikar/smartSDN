@@ -71,7 +71,7 @@ def splitdataset(balance_data):
 
 
 def train_rl(X_train,y_train):
-    reconstructed_model = keras.models.load_model("../rl_model_v11")
+    reconstructed_model = keras.models.load_model("../rl_model_v8")
     return reconstructed_model
 
 def train_forest(X_train, y_train):
@@ -110,11 +110,11 @@ def prediction_forest(X_test, clf_object):
     #print(y_pred)
     return y_pred
 
-def prediction_dnn(X_test, clf_object):
+def prediction_dnn(X_test, clf_object,y_orig):
     # Predicton on test with giniIndex
     y_pred = clf_object.predict(X_test)
     print("Predicted values:")
-    print(y_pred)
+    print(y_pred, y_orig)
     print(np.argmax(y_pred,axis=1))
 
     #return y_pred
@@ -140,6 +140,34 @@ def cal_accuracy(y_test, y_pred):
 
     print("Report : ",
           classification_report(y_test, y_pred))
+
+def cal_timing(y_test,y_pred):
+
+    N = len(y_test)
+    counter = 0
+    o_test = []
+    o_pred = []
+    output = 0
+    output_pred = 0
+
+    while(counter < N):
+        if (counter % 60) == 0:
+            #print("session no", (counter // 10),":",output_pred,output)
+            o_test.append(output)
+            o_pred.append(output_pred)
+            output = 0
+            output_pred = 0
+
+        if(y_test[counter] == 1):
+            output = 1
+
+        if(y_pred[counter] == 1):
+            output_pred = 1
+
+        counter +=1
+
+    cal_accuracy(o_test, o_pred)
+
 
 def dnn_scores(X_train,y_train,X_test,y_test,dec_tree):
     pred_train = dec_tree.predict(X_train)
@@ -179,17 +207,18 @@ def main():
     # Operational Phase
     print("Results:")
 
-    # ##adding noise for robustness testing
-    # noise = np.random.normal(0, 20, X_test.shape)
-    # X_test += noise.round()
+    ##adding noise for robustness testing
+    noise = np.random.normal(0, 100, X_test.shape)
+    X_test += noise.round()
 
     #for dnn only
     #dnn_scores(X_train,y_train,X_test,y_test,dec_tree)
 
     #print(X_test)
     # Prediction
-    y_pred = prediction_dnn(X_test, dec_tree)
+    y_pred = prediction_dnn(X_test, dec_tree, y_orig)
     cal_accuracy(y_orig, y_pred)
+    cal_timing(y_orig,y_pred)
 
 # Calling main function
 if __name__ == "__main__":

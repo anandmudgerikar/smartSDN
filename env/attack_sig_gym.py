@@ -12,7 +12,7 @@ class Attack_Sig_Gym(gym.Env):
 
     def __init__(self):
 
-        self.data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test1_2sec.csv", sep=',', header=0)
+        self.data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_train.csv", sep=',', header=0)
 
         feature_cols = ['pckts_forward', 'bytes_forward', 'pckts_back', 'bytes_back', 'label']
         self.data = self.data[feature_cols]  # Features
@@ -107,6 +107,10 @@ class Attack_Sig_Gym(gym.Env):
          v10: more exploration 0.2, fpr=pckts_forward, tnr = pckts_forward,  +ve reward = 500
          v11: more exploration 0.2, fpr=pckts_forward*2, tnr = pckts_forward,  +ve reward = 1000
          v12: more exploration 0.2, fpr=pckts_forward, tnr = pckts_forward,  +ve reward = 1000
+         v13: more exploration 0.2, fpr=pckts_forward, tnr = pckts_forward*5,  +ve reward = 1000
+         v14 : more exploration 0.2, fpr=pckts_forward, tnr = pckts_forward*5,  +ve reward = 500
+         v15 : more exploration 0.2, fpr=pckts_forward, tnr = pckts_forward*5,  +ve reward = 500, ds=train_dataset(k attacks)
+         v16 : more exploration 0.2, fpr=pckts_forward*10, tnr = pckts_forward,  +ve reward = 500, ds=train_dataset(k attacks)
         """
         reward = 0
 
@@ -114,12 +118,12 @@ class Attack_Sig_Gym(gym.Env):
             if(self.data.values[self.turns,4] == "Malicious"): #true neg
                 reward -= (self.ob[0]) #no of malicious packets going through
             else:
-                reward +=1000 #false negative
+                reward +=500 #false negative
         else:
             if(self.data.values[self.turns,4] == "Benign"): #false positive
-                reward -= (self.ob[0]) #no of benign packets getting dropped
+                reward -= (self.ob[0])*10 #no of benign packets getting dropped
             else:
-                reward += 1000 #true positive
+                reward += 500 #true positive
         return reward
 
     def _get_new_state(self,action):

@@ -31,7 +31,7 @@ class DQNAgent:
         self.memory = deque(maxlen=2000)
         self.gamma = 0.95    # discount rate
         self.epsilon = 1.0  # exploration rate
-        self.epsilon_min = 0.2
+        self.epsilon_min = 0.01
         self.epsilon_decay = 0.9999
         self.learning_rate = 0.001
         self.model = self._build_model()
@@ -114,7 +114,7 @@ for e in range(EPISODES):
             print("episode: {}/{}, score: {}, e: {:.2f}"
                   .format(e, EPISODES, env.sum_rewards, agent.epsilon))
             avg += env.sum_rewards
-            agent.save("rl_model_v12")
+            agent.save("rl_model_v16")
             break
         if len(agent.memory) > batch_size:
             loss = agent.replay(batch_size)
