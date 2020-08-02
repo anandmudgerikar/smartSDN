@@ -71,7 +71,7 @@ def splitdataset(balance_data):
 
 
 def train_rl(X_train,y_train):
-    reconstructed_model = keras.models.load_model("../rl_model_v24")
+    reconstructed_model = keras.models.load_model("../rl_models/rl_model_v24")
     return reconstructed_model
 
 def train_forest(X_train, y_train):
