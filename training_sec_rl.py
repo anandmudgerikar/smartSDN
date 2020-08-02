@@ -87,7 +87,7 @@ class DQNAgent:
 
 # Q, stats = qLearning(env, 1000)
 
-EPISODES = 600
+EPISODES = 3600
 print()
 state_size = len(env.observation_space.spaces)
 action_size = env.action_space.n
@@ -114,7 +114,7 @@ for e in range(EPISODES):
             print("episode: {}/{}, score: {}, e: {:.2f}"
                   .format(e, EPISODES, env.sum_rewards, agent.epsilon))
             avg += env.sum_rewards
-            agent.save("rl_model_v16")
+            agent.save("rl_model_v24")
             break
         if len(agent.memory) > batch_size:
             loss = agent.replay(batch_size)

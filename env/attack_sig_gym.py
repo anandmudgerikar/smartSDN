@@ -72,7 +72,7 @@ class Attack_Sig_Gym(gym.Env):
         if self.turns == len(self.data)-1:
             self.turns = 0
 
-        if((self.turns % 60) == 0):
+        if((self.turns % 10) == 0):
             self.episode_over = True
 
         return self.ob, self.reward, self.episode_over, {}
@@ -111,19 +111,28 @@ class Attack_Sig_Gym(gym.Env):
          v14 : more exploration 0.2, fpr=pckts_forward, tnr = pckts_forward*5,  +ve reward = 500
          v15 : more exploration 0.2, fpr=pckts_forward, tnr = pckts_forward*5,  +ve reward = 500, ds=train_dataset(k attacks)
          v16 : more exploration 0.2, fpr=pckts_forward*10, tnr = pckts_forward,  +ve reward = 500, ds=train_dataset(k attacks)
+         v17 : more exploration 0.2, fpr=pckts_forward, tnr = pckts_forward,  +ve reward = 300, ds=train_dataset(k attacks)
+         v18 : more exploration 0.2, fpr=pckts_forward*40, tnr = pckts_forward*20,  +ve reward = 200, ds=train_dataset(k attacks) - best
+         v19 : more exploration 0.2, fpr=pckts_forward*20, tnr = pckts_forward*20,  +ve reward = 200, ds=train_dataset(k attacks)
+         v20 : more exploration 0.2, fpr=pckts_forward*20, tnr = pckts_forward*20,  +ve reward = 300, ds=train_dataset(k attacks)
+         v21 : more exploration 0.2, fpr=pckts_forward*30, tnr = pckts_forward*20,  +ve reward = 200, ds=train_dataset(k attacks)
+         v22 : more exploration 0.2, fpr=pckts_forward*40, tnr = pckts_forward*30,  +ve reward = 200, ds=train_dataset(k attacks)
+         v23 : more exploration 0.2, fpr=pckts_forward*40, tnr = pckts_forward*40,  +ve reward = 200, ds=train_dataset(k attacks)
+          v24 : more exploration 0.2, fpr=pckts_forward*40, tnr = pckts_forward*20,  +ve reward = 200, ds=train_dataset(k attacks), episode size = 10
+
         """
         reward = 0
 
         if(action == 0): #allow
             if(self.data.values[self.turns,4] == "Malicious"): #true neg
-                reward -= (self.ob[0]) #no of malicious packets going through
+                reward -= (self.ob[0])*20 #no of malicious packets going through
             else:
-                reward +=500 #false negative
+                reward +=200 #false negative
         else:
             if(self.data.values[self.turns,4] == "Benign"): #false positive
-                reward -= (self.ob[0])*10 #no of benign packets getting dropped
+                reward -= (self.ob[0])*40 #no of benign packets getting dropped
             else:
-                reward += 500 #true positive
+                reward += 200 #true positive
         return reward
 
     def _get_new_state(self,action):
