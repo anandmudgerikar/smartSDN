@@ -17,13 +17,16 @@ from keras.optimizers import Adam
 from keras.layers import LSTM, Dense, Dropout, Masking, Embedding
 import random
 from tensorflow import keras
+import matplotlib.pyplot as plt
 
 
 # importing Dataset (from pcap parser: known attacks)
 def importdata():
-    balance_data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_train.csv",sep=',', header=0)
-
+    # balance_data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_train.csv",sep=',', header=0)
+    #
     test_data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_test.csv",sep=',', header=0)
+
+    balance_data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/all_attacks.csv",sep=',', header=0)
 
     # # removing na and normalizing with mean
     # balance_data.fillna(balance_data.mean())
@@ -40,7 +43,7 @@ def importdata():
 
     # Printing the dataset obseravtions
     print("Train Dataset: ", balance_data.head())
-    print("Test Dataset: ", test_data.head())
+    #print("Test Dataset: ", test_data.head())
 
     return balance_data, test_data
 
@@ -71,10 +74,24 @@ def splitdataset(balance_data):
 
 
 def train_rl(X_train,y_train):
-    reconstructed_model = keras.models.load_model("../rl_models/rl_model_v24")
+    reconstructed_model = keras.models.load_model("../rl_models/rl_model_v14")
     return reconstructed_model
 
 def train_forest(X_train, y_train):
+    # Creating the RF classifier object
+    dec_tree = RandomForestClassifier()
+
+    # Performing training
+    dec_tree.fit(X_train, y_train)
+    print("Training complete")
+
+    #save dec tree model
+    filename = 'rforest.sav'
+    pickle.dump(dec_tree, open(filename, 'wb'))
+    return dec_tree
+
+def train_dtree(X_train, y_train):
+
     # Creating the Decision Tree classifier object
     dec_tree = DecisionTreeClassifier()
 
@@ -91,8 +108,8 @@ def train_dnn(X_train,y_train):
 
     #DNN
     model = Sequential()
-    model.add(Dense(1024, input_dim=4, activation='relu'))
-    model.add(Dense(1024, activation='relu'))
+    model.add(Dense(128, input_dim=4, activation='relu'))
+    model.add(Dense(128, activation='relu'))
     #model.add(Dense(1024, activation='relu'))
     model.add(Dense(2, activation='softmax'))
     model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam(lr=0.001,decay=0.001))
@@ -113,10 +130,13 @@ def prediction_forest(X_test, clf_object):
 def prediction_dnn(X_test, clf_object,y_orig):
     # Predicton on test with giniIndex
     y_pred = clf_object.predict(X_test)
+    print(X_test)
     print("Predicted values:")
-    print(y_pred, y_orig)
-    print(np.argmax(y_pred,axis=1))
-
+    #print(y_pred, y_orig)
+    #print(np.argmax(y_pred,axis=1))
+    #print(np.argmax(y_pred[0]))
+    # y_pred2 = clf_object.predict(np.array([[399, 45899, 2, 112], [9, 2, 5, 1],[13, 2155, 118 ,126781], [3, 156, 3, 156]]))
+    # print("prediction is", y_pred2)
 
     #return y_pred
     return np.argmax(y_pred,axis=1)
@@ -126,7 +146,11 @@ def prediction_rl(X_test,clf_object):
     y_pred = clf_object.predict(X_test)
     print("Predicted values:")
     print(y_pred)
+    print(np.argmax(y_pred))
     print(np.argmax(y_pred, axis=1))
+
+    y_pred2 = clf_object.predict((0,0,0,0))
+    print("prediction is",y_pred2)
 
     # return y_pred
     return np.argmax(y_pred, axis=1)
@@ -153,7 +177,7 @@ def cal_timing(y_test,y_pred, yq_values):
     output_count = 0
 
     while(counter < N):
-        if (counter % 10) == 0:
+        if (counter % 60) == 0:
             # print("session no", (counter // 10),":",output_pred,output)
             o_test.append(output)
             o_pred.append(output_pred)
@@ -163,10 +187,10 @@ def cal_timing(y_test,y_pred, yq_values):
 
         if(y_test[counter] == 1):
             output_count += 1
-            if(output_count >= 5):
+            if(output_count >= 30):
                 output = 1
 
-        if(y_pred[counter] == 1 ):#and yq_values[counter][0] < 0 #and yq_values[counter][0] < 500 and yq_values[counter][1] > 600
+        if( y_pred[counter] == 1 ):#and yq_values[counter][0] < 0 #and yq_values[counter][0] < 500 and yq_values[counter][1] > 600 #and yq_values[counter][0] < 3000 and yq_values[counter][1] > 4400
             output_pred = 1
             #print(yq_values[counter])
 
@@ -184,15 +208,38 @@ def dnn_scores(X_train,y_train,X_test,y_test,dec_tree):
     scores2 = dec_tree.evaluate(X_test, y_test, verbose=0)
     print('Accuracy on test data: {}% \n Error on test data: {}'.format(scores2[1], 1 - scores2[1]))
 
+def analyse_rl(y_test,y_pred, yq_values):
+
+    N = len(y_test)
+    counter = 0
+
+
+    x = range(N)
+    # avg_benign = sum(yq_values[:,0])/N
+    # avg_mal = sum(yq_values[:, 1]) / N
+
+    plt.plot(x,yq_values[:,0], label = "benign")
+    plt.plot(x,yq_values[:,1], label = "mal")
+    plt.plot(x,y_test[:]*100)
+
+    plt.show()
+
+    # while(counter < N):
+    #
+    #     if(y_test[counter] == 1): #malicious
+    #         print(yq_values[counter])
+    #     counter +=1
+
+
 # Driver code
 def main():
     # Building Phase
     data, test_data = importdata()
     X, Y, X_train, X_test, y_train, y_test = splitdataset(data)
 
-    #IF testing
-    X_test = test_data.values[:, 0:4]
-    y_test = test_data.values[:, 4]
+    # #IF testing
+    # X_test = test_data.values[:, 0:4]
+    # y_test = test_data.values[:, 4]
 
     le = LabelEncoder()
     le.fit(y_train)
@@ -207,15 +254,15 @@ def main():
     print(y_train)
     print(y_orig)
 
-    dec_tree = train_rl(X_train,y_train)
+    dec_tree = train_forest(X_train,y_train)
     #dec_tree = train_dnn(X_train,y_train)
 
     # Operational Phase
     print("Results:")
 
-    # #adding noise for robustness testing
-    # noise = np.random.normal(0, 100, X_test.shape)
-    # X_test += noise.round()
+    # # #adding noise for robustness testing
+    noise = np.random.normal(0, 10, X_test.shape)
+    X_test += noise.round()
 
     #for dnn only
     #dnn_scores(X_train,y_train,X_test,y_test,dec_tree)
@@ -225,8 +272,10 @@ def main():
     #print(X_test)
     # Prediction
     y_pred = prediction_dnn(X_test, dec_tree, y_orig)
+    #y_pred = prediction_forest(X_test, dec_tree)
     cal_accuracy(y_orig, y_pred)
     cal_timing(y_orig,y_pred, yq_values)
+    analyse_rl(y_orig,y_pred, yq_values)
 
 # Calling main function
 if __name__ == "__main__":

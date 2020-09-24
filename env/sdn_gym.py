@@ -24,7 +24,7 @@ class SDN_Gym(gym.Env):
 
     def __init__(self):
 
-        self.action_space = spaces.Discrete(2) #for security only testing n=2, allow/drop, for jarvis n=3, allow/drop/queue
+        self.action_space = spaces.Discrete(11) #for security only testing n=2, allow/drop, for jarvis n=3, allow/drop/queue
         self.observation_space = spaces.MultiDiscrete([100, 100, 100, 100, 100])
         self.ob = self._get_initial_state()
         self.episode_over = False

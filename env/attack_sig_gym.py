@@ -7,22 +7,25 @@ import pickle
 import numpy as np
 import pandas as pd
 
+#discretizing actions : 1 = all pckts blocked, 0 = all allowed
+action_tab = {0:0, 1: 0.1, 2:0.2, 3:0.3,4:0.4, 5:0.5, 6:0.6, 7:0.7, 8:0.8, 9:0.9, 10:1 }
 
 class Attack_Sig_Gym(gym.Env):
 
     def __init__(self):
 
-        self.data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_train.csv", sep=',', header=0)
+        #self.data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_train.csv", sep=',', header=0)
+        self.data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/all_attacks.csv", sep=',', header=0)
 
-        feature_cols = ['pckts_forward', 'bytes_forward', 'pckts_back', 'bytes_back', 'label']
+        feature_cols = ['Interval','pckts_forward', 'bytes_forward', 'pckts_back', 'bytes_back', 'label']
         self.data = self.data[feature_cols]  # Features
 
         # Printing the dataswet shape
         print("Dataset Length: ", len(self.data))
         print("Dataset Shape: ", self.data.shape)
 
-        self.action_space = spaces.Discrete(2) #action = allow:1, drop:0
-        self.observation_space = spaces.Tuple((spaces.Discrete(15000),spaces.Discrete(15000),spaces.Discrete(15000),spaces.Discrete(15000)))
+        self.action_space = spaces.Discrete(11) #action = allow:1, drop:0
+        self.observation_space = spaces.Tuple((spaces.Discrete(1000),spaces.Discrete(15000),spaces.Discrete(1000),spaces.Discrete(15000)))
         self.ob = self._get_initial_state()
         self.episode_over = False
         self.turns = 0
@@ -69,11 +72,17 @@ class Attack_Sig_Gym(gym.Env):
         # if self.turns == len(self.data)-1:
         #      self.episode_over = True
 
+        if self.data.values[self.turns, 0] == 60: #episode size
+            self.episode_over = True
+
         if self.turns == len(self.data)-1:
             self.turns = 0
-
-        if((self.turns % 10) == 0):
             self.episode_over = True
+
+
+
+        # if((self.turns % 60) == 0):
+        #     self.episode_over = True
 
         return self.ob, self.reward, self.episode_over, {}
 
@@ -119,34 +128,53 @@ class Attack_Sig_Gym(gym.Env):
          v22 : more exploration 0.2, fpr=pckts_forward*40, tnr = pckts_forward*30,  +ve reward = 200, ds=train_dataset(k attacks)
          v23 : more exploration 0.2, fpr=pckts_forward*40, tnr = pckts_forward*40,  +ve reward = 200, ds=train_dataset(k attacks)
           v24 : more exploration 0.2, fpr=pckts_forward*40, tnr = pckts_forward*20,  +ve reward = 200, ds=train_dataset(k attacks), episode size = 10
-
+          v25 : more exploration 0.2, fpr=-4, tnr = -2,  +ve reward = 2, ds=train_dataset(k attacks)
+           v26 : more exploration 0.2, fpr=-3, tnr = -2,  +ve reward = 2, ds=train_dataset(k attacks)
+            v27 : more exploration 0.2, fpr=-3, tnr = -2,  +ve reward = 2,4, ds=train_dataset(k attacks)
+            v27 : more exploration 0.2, fpr=-3, tnr = -2,fn =3, tp=6  , ds=train_dataset(k attacks)
+            v28 : more exploration 0.2, fpr=-3, tnr = -2,fn =1, tp=1  , ds=train_dataset(k attacks)
+            v29 : more exploration 0.2, fpr=-1, tnr = -2,fn =1, tp=1  , ds=train_dataset(k attacks), less replay (todo)
+            v30 : more exploration 0.2, fpr=-2, tnr = -1,fn =5, tp=5  , ds=train_dataset(k attacks), less replay
+            v31 : more exploration 0.2, fpr=-2, tnr = -1,fn =5, tp=5  , ds=train_dataset(k attacks) (todo)
+            v32: full episode training, no temporal (31)
         """
         reward = 0
 
-        if(action == 0): #allow
-            if(self.data.values[self.turns,4] == "Malicious"): #true neg
-                reward -= (self.ob[0])*20 #no of malicious packets going through
-            else:
-                reward +=200 #false negative
+        if (self.data.values[self.turns, 5] == "Malicious"):  # true neg
+            reward -= (1-action_tab[action])*self.ob[1]  #no of malicious packets going through
         else:
-            if(self.data.values[self.turns,4] == "Benign"): #false positive
-                reward -= (self.ob[0])*40 #no of benign packets getting dropped
-            else:
-                reward += 200 #true positive
+            reward += (1-action_tab[action])*self.ob[1]*0.2 #false negative
+
         return reward
+
+        # if(action == 0): #allow
+        #     if(self.data.values[self.turns,4] == "Malicious"): #true neg
+        #         reward -= 1 #no of malicious packets going through
+        #     else:
+        #         reward +=5 #false negative
+        # else:
+        #     if(self.data.values[self.turns,4] == "Benign"): #false positive
+        #         reward -= 2 #no of benign packets getting dropped
+        #     else:
+        #         reward += 5 #true positive
+        # return reward
 
     def _get_new_state(self,action):
         """
         Get the next state from current state
         :return:
         """
-        next_state = self.data.values[self.turns,:4]
-
+        next_state = self.data.values[self.turns,1:5]
+        next_state -= action_tab[action]* self.ob #pckts blocked
         return next_state
 
 
-    def _get_initial_state(self):
-        return self.data.values[0,:4]
+    def _get_initial_state(self, stop = 0):
+        if stop == 0:
+            stop = len(self.data)-1
+        start = random.randint(0,stop)
+        self.turns = start
+        return self.data.values[start,1:5]
 
     def _seed(self):
         return

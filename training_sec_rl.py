@@ -32,15 +32,15 @@ class DQNAgent:
         self.gamma = 0.95    # discount rate
         self.epsilon = 1.0  # exploration rate
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.9999
+        self.epsilon_decay = 0.995
         self.learning_rate = 0.001
         self.model = self._build_model()
 
     def _build_model(self):
         # Neural Net for Deep-Q learning Model
         model = Sequential()
-        model.add(Dense(128,input_dim=self.state_size, activation='relu'))
-        model.add(Dense(128, activation='relu'))
+        model.add(Dense(64,input_dim=self.state_size, activation='relu'))
+        model.add(Dense(64, activation='relu'))
         model.add(Dense(self.action_size, activation='linear'))
         model.compile(loss='mse',optimizer=Adam(lr=self.learning_rate))
         return model
@@ -76,8 +76,6 @@ class DQNAgent:
             self.epsilon *= self.epsilon_decay
         return loss
 
-
-
     def load(self, name):
         self.model.load_weights(name)
 
@@ -87,7 +85,7 @@ class DQNAgent:
 
 # Q, stats = qLearning(env, 1000)
 
-EPISODES = 3600
+EPISODES = 2000
 print()
 state_size = len(env.observation_space.spaces)
 action_size = env.action_space.n
@@ -95,13 +93,19 @@ print("state and action sizes are:"+str(state_size)+","+str(action_size))
 agent = DQNAgent(state_size, action_size)
 # agent.load("./save/cartpole-dqn.h5")
 done = False
-batch_size =200
+batch_size =60
 avg = 0
 
 for e in range(EPISODES):
-    state = env.reset()
+    #state = env.reset()
+    state = env._get_initial_state()
+    #env.turns = 0
+    env.sum_rewards = 0.0
+    done = False
+    env.episode_done = False
+
     state = np.reshape(state, [1, state_size])
-    while env.episode_over == False:
+    while not done:
         # env.render()
         action = agent.act(state)
         # print(action)
@@ -114,9 +118,16 @@ for e in range(EPISODES):
             print("episode: {}/{}, score: {}, e: {:.2f}"
                   .format(e, EPISODES, env.sum_rewards, agent.epsilon))
             avg += env.sum_rewards
-            agent.save("rl_model_v24")
+            # agent.save("rl_model_v31")
+
+            if len(agent.memory) > batch_size:
+                loss = agent.replay(batch_size)
+
+            if(e % 500) == 0:
+                agent.save("dqn_agent2")
+
             break
-        if len(agent.memory) > batch_size:
-            loss = agent.replay(batch_size)
+
+
 
 print("average score = ",(avg//EPISODES))
