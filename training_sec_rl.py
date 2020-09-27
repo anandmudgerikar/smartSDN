@@ -71,10 +71,10 @@ class DQNAgent:
             targets_f.append(target_f[0])
         history = self.model.fit(np.array(states), np.array(targets_f), epochs=1, verbose=0)
         # Keeping track of loss
-        loss = history.history['loss'][0]
+        #loss = history.history['loss'][0]
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
-        return loss
+        #return loss
 
     def load(self, name):
         self.model.load_weights(name)
@@ -85,7 +85,7 @@ class DQNAgent:
 
 # Q, stats = qLearning(env, 1000)
 
-EPISODES = 2000
+EPISODES = 1000
 print()
 state_size = len(env.observation_space.spaces)
 action_size = env.action_space.n
@@ -93,16 +93,16 @@ print("state and action sizes are:"+str(state_size)+","+str(action_size))
 agent = DQNAgent(state_size, action_size)
 # agent.load("./save/cartpole-dqn.h5")
 done = False
-batch_size =60
+batch_size =200
 avg = 0
 
 for e in range(EPISODES):
-    #state = env.reset()
-    state = env._get_initial_state()
-    #env.turns = 0
-    env.sum_rewards = 0.0
+    state = env.reset()
+    # state = env._get_initial_state()
+    # #env.turns = 0
+    # env.sum_rewards = 0.0
     done = False
-    env.episode_done = False
+    # env.episode_done = False
 
     state = np.reshape(state, [1, state_size])
     while not done:
@@ -121,11 +121,16 @@ for e in range(EPISODES):
             # agent.save("rl_model_v31")
 
             if len(agent.memory) > batch_size:
-                loss = agent.replay(batch_size)
+                #loss =
+                agent.replay(batch_size)
 
             if(e % 500) == 0:
-                agent.save("dqn_agent2")
+                agent.save("dqn_agent4")
 
+            #best - 0.5 negative reward, state clipping, no reward clipping, epsilon_decay=0.995, mem=2000, batchsize = 60
+            #dqn3 - 0.1 negative reward
+            #dqn4 - 0.5 negative reward
+            #dqn5 - batchsize = 200
             break
 
 

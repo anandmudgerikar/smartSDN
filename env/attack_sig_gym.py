@@ -25,7 +25,7 @@ class Attack_Sig_Gym(gym.Env):
         print("Dataset Shape: ", self.data.shape)
 
         self.action_space = spaces.Discrete(11) #action = allow:1, drop:0
-        self.observation_space = spaces.Tuple((spaces.Discrete(1000),spaces.Discrete(15000),spaces.Discrete(1000),spaces.Discrete(15000)))
+        self.observation_space = spaces.Tuple((spaces.Discrete(1000),spaces.Discrete(10000),spaces.Discrete(1000),spaces.Discrete(10000)))
         self.ob = self._get_initial_state()
         self.episode_over = False
         self.turns = 0
@@ -72,7 +72,7 @@ class Attack_Sig_Gym(gym.Env):
         # if self.turns == len(self.data)-1:
         #      self.episode_over = True
 
-        if self.data.values[self.turns, 0] == 60: #episode size
+        if (self.data.values[self.turns, 0] - self.data.values[self.turns-1, 0]) != 1: #episode size
             self.episode_over = True
 
         if self.turns == len(self.data)-1:
@@ -141,9 +141,9 @@ class Attack_Sig_Gym(gym.Env):
         reward = 0
 
         if (self.data.values[self.turns, 5] == "Malicious"):  # true neg
-            reward -= (1-action_tab[action])*self.ob[1]  #no of malicious packets going through
+            reward -= ((1 - action_tab[action])*self.ob[1]*500*0.5)  #no of malicious packets going through
         else:
-            reward += (1-action_tab[action])*self.ob[1]*0.2 #false negative
+            reward += ((1 - action_tab[action])*self.ob[1]*500) #false benign packets going through
 
         return reward
 
@@ -165,7 +165,9 @@ class Attack_Sig_Gym(gym.Env):
         :return:
         """
         next_state = self.data.values[self.turns,1:5]
-        next_state -= action_tab[action]* self.ob #pckts blocked
+        next_state = np.divide(next_state, np.array([500, 20000, 500, 20000]))
+        next_state -= (action_tab[action]* self.ob) #pckts blocked
+
         return next_state
 
 
@@ -174,7 +176,10 @@ class Attack_Sig_Gym(gym.Env):
             stop = len(self.data)-1
         start = random.randint(0,stop)
         self.turns = start
-        return self.data.values[start,1:5]
+        self.episode_over = False
+        state = self.data.values[start,1:5]
+        state = np.divide(state,np.array([500,20000,500,20000]))
+        return state
 
     def _seed(self):
         return

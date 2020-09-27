@@ -117,6 +117,8 @@ def train_dnn(X_train,y_train):
     #minibatch = random.sample((X_train,y_train),50)
 
     model.fit(X_train,y_train,epochs=50)
+    model.save("dnn_model")
+
     return model
 
 # Function to make predictions
@@ -254,8 +256,8 @@ def main():
     print(y_train)
     print(y_orig)
 
-    dec_tree = train_forest(X_train,y_train)
-    #dec_tree = train_dnn(X_train,y_train)
+    #dec_tree = train_forest(X_train,y_train)
+    dec_tree = train_dnn(X_train,y_train)
 
     # Operational Phase
     print("Results:")
