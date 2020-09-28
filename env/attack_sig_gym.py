@@ -141,9 +141,9 @@ class Attack_Sig_Gym(gym.Env):
         reward = 0
 
         if (self.data.values[self.turns, 5] == "Malicious"):  # true neg
-            reward -= ((1 - action_tab[action])*self.ob[1]*500*0.5)  #no of malicious packets going through
+            reward -= ((1 - action_tab[action])*self.ob[1]*500*0.5)  #no of malicious bytes going through
         else:
-            reward += ((1 - action_tab[action])*self.ob[1]*500) #false benign packets going through
+            reward += ((1 - action_tab[action])*self.ob[1]*500) #false benign bytes going through
 
         return reward
 

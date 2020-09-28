@@ -15,8 +15,11 @@ import pandas as pd
 from env.sdn_gym import SDN_Gym
 
 # env = gym.make('sdn-v0')
-env = gym.make('attack-sig-v0')
+# env = gym.make('attack-sig-v0')
+data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/all_attacks.csv", sep=',', header=0)
 
+feature_cols = ['Interval','pckts_forward', 'bytes_forward', 'pckts_back', 'bytes_back', 'label']
+data = data[feature_cols]  # Features
 
 # def data_to_replay_buffer(states, actions, rewards,next_states, matrix_D):
 #     # num_time_slots = len(state)
@@ -39,12 +42,12 @@ env = gym.make('attack-sig-v0')
 #
 #     return matrix_D
 
-num_trajectory = 2
+num_trajectory = 100
 num_users = 10
 state_size = 4
-server_threshold = 10000
+server_threshold = 5
 
-data_size = len(env.data)-1 - 60
+data_size = len(data)-1 - 60
 user_turns = [0]*num_users
 user_dones = [False]*num_users
 user_state = [[0]*state_size for _ in range(num_users)]
@@ -71,7 +74,8 @@ for trajectory in range(num_trajectory):
     # getting initial states for all users
     for user in range(num_users):
         user_turns[user] = random.randint(0, data_size)
-        next_state[user] = env.data.values[user_turns[user], 1:5]
+        next_state[user] = data.values[user_turns[user], 1:5]
+        next_state[user] = np.divide(next_state[user], np.array([500, 20000, 500, 20000]))
         user_dones[user] = False
 
 
@@ -98,23 +102,23 @@ for trajectory in range(num_trajectory):
             joint_state.append(user_state[user])
 
             #random action
-            user_action = random.randint(0,10-action_sum)
+            user_action = random.randint(0,10)
             action_sum += user_action
             joint_action.append(user_action)
 
             #getting rewards
-            joint_reward += ((1 - action_tab[user_action]) * user_state[user][1] * 500)
+            joint_reward += ((1 - action_tab[user_action]) * user_state[user][1])
 
             #next time stamp
             user_turns[user] += 1
 
             #getting if done
-            if (env.data.values[user_turns[user], 0] - env.data.values[user_turns[user] - 1, 0]) != 1 :
+            if (data.values[user_turns[user], 0] - data.values[user_turns[user] - 1, 0]) != 1 :
                 user_dones[user] = True
 
             #getting next state
             if not user_dones[user]:
-                next_state[user] = env.data.values[user_turns[user], 1:5]
+                next_state[user] = data.values[user_turns[user], 1:5]
                 next_state[user] = np.divide(next_state[user], np.array([500, 20000, 500, 20000]))
                 next_state[user] -= (action_tab[user_action] * user_state[user])  # pckts blocked
             else:
@@ -130,11 +134,16 @@ for trajectory in range(num_trajectory):
         if(all(done == True for done in user_dones)):
              joint_done = True
 
+        interval +=1
+
+        #print(joint_reward)
         #server threshold
         if joint_reward >= server_threshold:
-            joint_reward = (-10*(joint_reward - server_threshold)/num_users)
+            joint_reward = -100 #(-1*(joint_reward - server_threshold)/num_users)
         else:
-            joint_reward = (-5*(server_threshold - joint_reward)/num_users)
+            joint_reward = (100*(joint_reward)/num_users)
+
+        print(joint_reward/interval)
 
         matrix_D.add(joint_state, joint_action, joint_reward, joint_next_state, joint_done)
 

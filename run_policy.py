@@ -14,10 +14,10 @@ from env.sdn_gym import SDN_Gym
 env = gym.make('attack-sig-v0')
 
 
-num_trajectory = 2
+num_trajectory = 10
 num_users = 10
 state_size = 4
-server_threshold = 10000
+server_threshold = 1
 
 data_size = len(env.data)-1 - 60
 user_turns = [0]*num_users
@@ -39,9 +39,9 @@ dones=[]
 
 
 
-def test(model):
+def test(model,randaction= False):
 
-    sum_rewards = 0
+    total_rewards = 0
 
 
     for trajectory in range(num_trajectory):
@@ -51,10 +51,12 @@ def test(model):
         for user in range(num_users):
             user_turns[user] = random.randint(0, data_size)
             next_state[user] = env.data.values[user_turns[user], 1:5]
+            next_state[user] = np.divide(next_state[user], np.array([500, 20000, 500, 20000]))
             user_dones[user] = False
             prev_joint_state.append(next_state[user])
 
         joint_done = False
+        sum_rewards = 0
 
         while not joint_done:
 
@@ -75,11 +77,17 @@ def test(model):
                 joint_state.append(user_state[user])
 
                 # random action
-                user_action = (model.policy_action(prev_joint_state)[user] + 10)//2
+                if(randaction == True):
+                    user_action = random.randint(0,10)
+                else:
+                    user_action = (model.policy_action(prev_joint_state)[user] + 10)//2
+                    if(user_action <0):
+                        user_action = 0
+                #print(user_action)
                 action_sum += user_action
 
                 # getting rewards
-                joint_reward += ((1 - action_tab[user_action]) * user_state[user][1] * 500)
+                joint_reward += ((1 - action_tab[user_action]) * user_state[user][1])
 
                 # next time stamp
                 user_turns[user] += 1
@@ -108,10 +116,13 @@ def test(model):
 
             # server threshold
             if joint_reward >= server_threshold:
-                joint_reward = (-10 * (joint_reward - server_threshold) / num_users)
+                joint_reward = (-1* (joint_reward - server_threshold) / num_users)
             else:
-                joint_reward = (-5 * (server_threshold - joint_reward) / num_users)
+                joint_reward = (10 * (joint_reward) / num_users)
 
             sum_rewards += joint_reward
+            interval +=1
 
-    return (sum_rewards/num_trajectory)
+        total_rewards += (sum_rewards/interval) #/interval? not sure
+
+    return (total_rewards/num_trajectory)

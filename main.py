@@ -16,8 +16,8 @@ def main():
 
     state_dim = (40,)
     action_dim = 10
-    act_range = 1
-    batch_size = 100
+    act_range = 10
+    batch_size = 60
 
     algo = DDPG(action_dim, state_dim, act_range, batch_size)
 

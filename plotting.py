@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-data = pd.read_pickle("replay_buffer.pickle")
+data = pd.read_pickle("replay_buffer_wposreward.pickle")
 
-print(data.sample(1))
+print(data.sample(100)[2])
 
 # actions_benign_dnn = pd.read_pickle('actions_benign_dnn.pickle')
 # actions_benign_dqn = pd.read_pickle('actions_benign_dqn.pickle')

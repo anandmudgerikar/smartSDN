@@ -29,9 +29,9 @@ class Critic:
         """
         state = Input((self.env_dim))
         action = Input((self.act_dim,))
-        x = Dense(256, activation='relu')(state)
+        x = Dense(64, activation='relu')(state)
         x = concatenate([x, action])
-        x = Dense(128, activation='relu')(x)
+        x = Dense(64, activation='relu')(x)
         out = Dense(1, activation='linear', kernel_initializer=RandomUniform())(x)
         return Model([state, action], out)
 

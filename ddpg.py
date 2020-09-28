@@ -11,9 +11,9 @@ import sys
 sys.path.append("/home/anand/gym")
 
 
-EPISODES = 1000
+EPISODES = 2000
 num_users = 10
-no_updates = 100
+no_updates = 1
 #regularization loss weights
 w_loss1 = 0.7
 w_grads = 0.3
@@ -30,7 +30,7 @@ class DDPG:
         """
         # Environment parameters
         self.act_dim = act_dim
-        self.act_range = act_range
+        # self.act_range = act_range
         self.env_dim =  env_dim
         self.gamma = gamma
         self.lr = lr
@@ -65,9 +65,9 @@ class DDPG:
         critic_target = np.asarray(q_values)
         for i in range(q_values.shape[0]):
             if dones[i]:
-                critic_target[i] = rewards[i]
+                critic_target[i] = (rewards[i])
             else:
-                critic_target[i] = rewards[i] + self.gamma * q_values[i]
+                critic_target[i] = (rewards[i]) + self.gamma * q_values[i]
         return critic_target
 
     #since we are training completely offline in current testing, we ignore this
@@ -102,33 +102,34 @@ class DDPG:
 
         #regularization loss for invalid actions
         #loss1: total assignments for one service greater than one
-        loss1 = []
-        #print(actions)
-        for action in actions:
-            if (sum(action) > 10):
-                temploss = -1#(sum((action[service*actions_per_service:(service+1)*actions_per_service] + 1) / 2) - 1)/actions_per_service
-            else:
-                temploss = 0
-
-            loss1.append([temploss] * num_users)
+        # loss1 = []
+        # #print(actions)
+        # for action in actions:
+        #     if (sum(action) > 10):
+        #         temploss = -10#(sum((action[service*actions_per_service:(service+1)*actions_per_service] + 1) / 2) - 1)/actions_per_service
+        #     else:
+        #         temploss = 0
+        #
+        #     loss1.append([temploss] * num_users)
 
         #logarithmic loss function, ignore now, important for approach 2
         #loss1 = -1*np.exp(loss1)
 
-        #generating new gradients
-        newgrads = []
-        grads = self.critic.gradients(states, actions)
-
-        #normalizing for combination
+        # #generating new gradients
+        # newgrads = []
+        # grads = self.critic.gradients(states, actions)
+        #
+        # #normalizing for combination
         grads_norm = (grads - np.min(grads)) / (np.max(grads) - np.min(grads))
-        #print(grads_norm)
-
-        loss1 = np.array(loss1)
-        grads_norm = np.array(grads_norm)
-
-        #adding regularization losses to gradients
-        new_grads = np.add(grads_norm*w_grads,loss1*w_loss1)
-        grads = new_grads
+        grads = grads_norm
+        # #print(grads_norm)
+        #
+        # loss1 = np.array(loss1)
+        # grads_norm = np.array(grads_norm)
+        #
+        # #adding regularization losses to gradients
+        # new_grads = np.add(grads_norm*w_grads,loss1*w_loss1)
+        # grads = new_grads
 
         # Train actor
         self.actor.train(states, actions, np.array(grads).reshape((-1, self.act_dim)))
@@ -196,12 +197,14 @@ class DDPG:
 
 
             #testing
-            total_reward = rp.test(self)
-            print("episode number",e," : ",total_reward )
-            # self.x.append(e)
+            if e>1000: #(e % 10) == 0 and
+                total_reward = rp.test(self)
+                random_reward = rp.test(self,True)
+                print("episode number",e," : ",total_reward, random_reward )
+                # self.x.append(e)
             # self.y.append(total_reward)
 
-            # e +=1
+            e +=1
             # # #adding more exploration for dynamic exploration testing, ignore
             # if e< 2:#(num_trajectory-1):
             #     s, a, r, _, _ = self.data.pull_by_index(0, batch_size*(e+1))

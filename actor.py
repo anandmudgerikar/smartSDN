@@ -27,11 +27,11 @@ class Actor:
         """
         inp = Input((self.env_dim))
         #
-        x = Dense(256, activation='relu')(inp)
+        x = Dense(64, activation='relu')(inp)
         x = GaussianNoise(1.0)(x)
         #
         #x = Flatten()(x)
-        x = Dense(128, activation='relu')(x)
+        x = Dense(64, activation='relu')(x)
         x = GaussianNoise(1.0)(x)
         #
         out = Dense(self.act_dim, activation='tanh', kernel_initializer=RandomUniform())(x)
