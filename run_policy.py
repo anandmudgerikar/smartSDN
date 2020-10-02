@@ -17,7 +17,7 @@ env = gym.make('attack-sig-v0')
 num_trajectory = 10
 num_users = 10
 state_size = 4
-server_threshold = 1
+server_threshold = 5
 
 data_size = len(env.data)-1 - 60
 user_turns = [0]*num_users
@@ -116,9 +116,9 @@ def test(model,randaction= False):
 
             # server threshold
             if joint_reward >= server_threshold:
-                joint_reward = (-1* (joint_reward - server_threshold) / num_users)
+                joint_reward = -100  #(-1* (joint_reward - server_threshold) / num_users)
             else:
-                joint_reward = (10 * (joint_reward) / num_users)
+                joint_reward = (100 * (joint_reward) / num_users)
 
             sum_rewards += joint_reward
             interval +=1

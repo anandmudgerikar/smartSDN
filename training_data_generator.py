@@ -47,7 +47,7 @@ num_users = 10
 state_size = 4
 server_threshold = 5
 
-data_size = len(data)-1 - 60
+data_size = 6000-60#len(data)-1 - 60
 user_turns = [0]*num_users
 user_dones = [False]*num_users
 user_state = [[0]*state_size for _ in range(num_users)]
@@ -158,7 +158,7 @@ for trajectory in range(num_trajectory):
 
 #
 #joint_matrix_D = data_to_replay_buffer(states, actions, rewards,next_states, matrix_D)
-with open("replay_buffer.pickle", "wb") as fp:
+with open("replay_buffer_mal.pickle", "wb") as fp:
     pickle.dump(matrix_D, fp)
 
 #print(states)

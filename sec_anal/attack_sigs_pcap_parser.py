@@ -29,6 +29,7 @@ for file in glob.glob("*.pcap"):
     prev_ts = 0
     interval = 0
     episode_start = 0
+    episode_begin = False
 
     # basic features
     pckt_count_forward = 0
@@ -48,17 +49,22 @@ for file in glob.glob("*.pcap"):
     #parameters
     STATE_INTERVAL = 1
     EPISODE_LEN = 60
-    user_ips = {'192.168.10.25'} #,'192.168.10.14','192.168.10.9','192.168.10.25,192.168.10.19'
+    user_ips = {'192.168.10.9'} #,'192.168.10.14','192.168.10.25','192.168.10.25,192.168.10.19'
     attacker_ips = {'172.16.0.1'}
 
     for ts, buf in pcap:
         #maintaining window of STATE_INTERVAL secs
         if(ts > prev_ts + STATE_INTERVAL):
             prev_ts = ts
-            interval +=1
+            if episode_begin:
+                interval +=1
 
             #writing to dataset for new/unknown attacks (building training/testing)
             if(pckt_count_forward > 0 or pckt_count_back > 0):
+                if not episode_begin:
+                    episode_begin = True
+                    episode_start = ts
+
                 # #print(ts, label)
                 # if(label == "dos"):
                 #     if(ts > 1499261700): #excluding slowloris and slowhttptest dos attacks
@@ -67,15 +73,16 @@ for file in glob.glob("*.pcap"):
                 #     if (ts > 1499174400):  # excluding ftp patator brute force attacks
                 #         print(str(datetime.datetime.utcfromtimestamp(ts)), pckt_count_forward, bytes_forward,pckt_count_back, bytes_back,'Malicious')
                 # else:
-                print(str(datetime.datetime.utcfromtimestamp(ts)),interval, pckt_count_forward, bytes_forward,pckt_count_back, bytes_back,'Malicious')
+                print(str(datetime.datetime.utcfromtimestamp(ts)),interval, pckt_count_forward, bytes_forward,pckt_count_back, bytes_back,'Benign')
 
             if(ts > episode_start + EPISODE_LEN):
                 pckt_count_forward = 0
                 pckt_count_back = 0
                 bytes_forward = 0
                 bytes_back = 0
-                episode_start = ts
+                #episode_start = ts
                 interval = 0
+                episode_begin = False
 
         eth = dpkt.ethernet.Ethernet(buf)
         ip = eth.data

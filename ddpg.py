@@ -200,7 +200,7 @@ class DDPG:
             if e>1000: #(e % 10) == 0 and
                 total_reward = rp.test(self)
                 random_reward = rp.test(self,True)
-                print("episode number",e," : ",total_reward, random_reward )
+                print("episode number",e," : ",total_reward, random_reward)
                 # self.x.append(e)
             # self.y.append(total_reward)
 

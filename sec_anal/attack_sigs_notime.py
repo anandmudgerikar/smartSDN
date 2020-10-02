@@ -26,7 +26,7 @@ def importdata():
     #
     test_data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_test.csv",sep=',', header=0)
 
-    balance_data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/all_attacks.csv",sep=',', header=0)
+    balance_data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/mal_fixed_interval.csv",sep=',', header=0)
 
     # # removing na and normalizing with mean
     # balance_data.fillna(balance_data.mean())

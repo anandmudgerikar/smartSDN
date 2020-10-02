@@ -102,6 +102,7 @@ for e in range(EPISODES):
     # #env.turns = 0
     # env.sum_rewards = 0.0
     done = False
+    interval = 0
     # env.episode_done = False
 
     state = np.reshape(state, [1, state_size])
@@ -114,9 +115,14 @@ for e in range(EPISODES):
         next_state = np.reshape(next_state, [1, state_size])
         agent.remember(state, action, reward, next_state, done)
         state = next_state
+
+        interval +=1
+
         if done:
-            print("episode: {}/{}, score: {}, e: {:.2f}"
-                  .format(e, EPISODES, env.sum_rewards, agent.epsilon))
+            final_reward = env.sum_rewards
+            #final_reward = (env.sum_rewards*(env.state_max[1]-env.state_min[1])+env.state_min[1])/interval
+            print("episode: {}/{}, score: {}, e: {:.2f}, interval = {}"
+                  .format(e, EPISODES,final_reward , agent.epsilon,interval))
             avg += env.sum_rewards
             # agent.save("rl_model_v31")
 
@@ -124,13 +130,14 @@ for e in range(EPISODES):
                 #loss =
                 agent.replay(batch_size)
 
-            if(e % 500) == 0:
-                agent.save("dqn_agent4")
+            if(e % 100) == 0:
+                agent.save("dqn_agent_load_complete_wsec0.1")
 
             #best - 0.5 negative reward, state clipping, no reward clipping, epsilon_decay=0.995, mem=2000, batchsize = 60
             #dqn3 - 0.1 negative reward
             #dqn4 - 0.5 negative reward
             #dqn5 - batchsize = 200
+            #dqn_fixed_interval = 60 interval, reward = packets not bytes,
             break
 
 

@@ -6,6 +6,7 @@ import time
 import pickle
 import numpy as np
 import pandas as pd
+import keras
 
 #discretizing actions : 1 = all pckts blocked, 0 = all allowed
 action_tab = {0:0, 1: 0.1, 2:0.2, 3:0.3,4:0.4, 5:0.5, 6:0.6, 7:0.7, 8:0.8, 9:0.9, 10:1 }
@@ -15,10 +16,14 @@ class Attack_Sig_Gym(gym.Env):
     def __init__(self):
 
         #self.data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_train.csv", sep=',', header=0)
-        self.data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/all_attacks.csv", sep=',', header=0)
+        self.data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/mal_fixed_interval.csv", sep=',', header=0)
 
         feature_cols = ['Interval','pckts_forward', 'bytes_forward', 'pckts_back', 'bytes_back', 'label']
         self.data = self.data[feature_cols]  # Features
+
+        #normalizing data
+        self.state_max = np.array([self.data.max(axis=0).values[1],self.data.max(axis=0).values[2],self.data.max(axis=0).values[3],self.data.max(axis=0).values[4]])
+        self.state_min = np.array([self.data.min(axis=0).values[1], self.data.min(axis=0).values[2],self.data.min(axis=0).values[3], self.data.min(axis=0).values[4]])
 
         # Printing the dataswet shape
         print("Dataset Length: ", len(self.data))
@@ -30,8 +35,10 @@ class Attack_Sig_Gym(gym.Env):
         self.episode_over = False
         self.turns = 0
         self.sum_rewards = 0.0
+        self.state_size = len(self.observation_space.spaces)
 
-
+        #security model
+        self.reconstructed_model = keras.models.load_model("/home/anand/PycharmProjects/mininet_backend/dqn_agent_fixed_interval")
 
     def _step(self, action):
         """
@@ -66,6 +73,12 @@ class Attack_Sig_Gym(gym.Env):
 
         #self.reward = self._get_reward(action) #for jarvis
         self.reward = self._get_reward(action)
+
+        # ##with security constraints
+        # state = np.reshape(self.ob, [1, self.state_size])
+        # q_values = self.reconstructed_model.predict(state)
+        # f1 = 0.1
+        # self.reward = self.reward*(1-f1) + (f1)*q_values[0][action]
 
         self.sum_rewards += self.reward
 
@@ -139,11 +152,40 @@ class Attack_Sig_Gym(gym.Env):
             v32: full episode training, no temporal (31)
         """
         reward = 0
-
+        # ##Security Reward
         if (self.data.values[self.turns, 5] == "Malicious"):  # true neg
-            reward -= ((1 - action_tab[action])*self.ob[1]*500*0.5)  #no of malicious bytes going through
+            reward -= ((1 - action_tab[action])*self.ob[1]*0.5)  #no of malicious bytes going through #*500
         else:
-            reward += ((1 - action_tab[action])*self.ob[1]*500) #false benign bytes going through
+            reward += ((1 - action_tab[action])*self.ob[1]) #false benign bytes going through #*500
+
+
+        #
+        # f1 = 2
+        # reward = reward*f1
+        # ##Load Balancing Reward
+        # mean, sigma = 30000, 5000
+        # server_capacity = np.random.normal(mean,sigma)
+        # #normalizing
+        # server_capacity = (server_capacity - self.state_min[1])/(self.state_max[1] - self.state_min[1])
+        #
+        # reward += ((1 - action_tab[action]) * self.ob[1])
+        #
+        # if reward >= server_capacity:
+        #     reward = -0.01  # (-1*(joint_reward - server_threshold)/num_users)
+        #     return reward
+        # # else:
+        # #     reward += ((1 - action_tab[action]) * self.ob[1])
+        #
+        # #user fairness reward
+        # mean, sigma = 500, 100
+        # user_sla = np.random.normal(mean, sigma)
+        # # normalizing
+        # user_sla = (user_sla - self.state_min[1]) / (self.state_max[1] - self.state_min[1])
+        #
+        # # reward += ((1 - action_tab[action]) * self.ob[1])
+        #
+        # if reward < user_sla and self.ob[1] > user_sla:
+        #     reward = -0.001  # (-1*(joint_reward - server_threshold)/num_users)
 
         return reward
 
@@ -165,20 +207,23 @@ class Attack_Sig_Gym(gym.Env):
         :return:
         """
         next_state = self.data.values[self.turns,1:5]
-        next_state = np.divide(next_state, np.array([500, 20000, 500, 20000]))
+        next_state = np.divide(next_state - self.state_min, self.state_max - self.state_min)
         next_state -= (action_tab[action]* self.ob) #pckts blocked
 
         return next_state
 
 
-    def _get_initial_state(self, stop = 0):
+    def _get_initial_state(self, begin=0,stop = 0, full_episode=False):
         if stop == 0:
-            stop = len(self.data)-1
-        start = random.randint(0,stop)
+            stop = len(self.data)-1-60
+        start = random.randint(begin,stop)
+        if(full_episode == True):
+            while(self.data.values[start,0] != 0):
+                start +=1
         self.turns = start
         self.episode_over = False
         state = self.data.values[start,1:5]
-        state = np.divide(state,np.array([500,20000,500,20000]))
+        state = np.divide(state - self.state_min, self.state_max - self.state_min)
         return state
 
     def _seed(self):
