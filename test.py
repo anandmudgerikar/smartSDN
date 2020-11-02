@@ -22,7 +22,7 @@ dec_tree = pickle.load(open(filename, 'rb'))
 # print x
 done = False
 sum_rewards = 0
-reconstructed_model = keras.models.load_model("./dqn_agent_fixed_interval")
+reconstructed_model = keras.models.load_model("./dnn_agent_load_complete_wsec0.9_norm")
 
 dnn_model = keras.models.load_model("./sec_anal/dnn_model")
 
@@ -39,7 +39,7 @@ for i in range(1000):
     env.reset()
     sum_rewards = 0
     done = False
-    observation = env._get_initial_state(0,20000, True)
+    observation = env._get_initial_state(30000,100000, True)
     env.ob = observation
     interval = 0
     packet_sum = 0
@@ -47,8 +47,8 @@ for i in range(1000):
     while not done:
         #action = env.action_space.sample()
 
-        #action = 1 - np.argmax(dec_tree.predict([env.ob]),axis=1)[0]
-        #print(action)
+        # action = 1 - np.argmax(dec_tree.predict([env.ob]),axis=1)[0]
+        # #print(action)
 
         state = np.reshape(observation, [1, state_size])
         #state = np.divide(state, np.array([500, 20000, 500, 20000]))
@@ -58,9 +58,9 @@ for i in range(1000):
         # #print(q_values)
         action = np.argmax(q_values)
 
-
-        #choosing actions according to dnn
-        # state = np.multiply(state, np.array([500, 20000, 500, 20000]))
+        #
+        # #choosing actions according to dnn
+        # state = np.multiply(state, env.state_max - env.state_min) + env.state_min
         # q_values = dnn_model.predict(state)
         #
         # # action = np.argmax(q_values)
@@ -96,20 +96,20 @@ for i in range(1000):
     print("Episode ", i, " : ", rewards[i],tot_packets[i],interval)
     #filling up rest of the intervals with average
     for j in range(interval,61):
-        actions[j] += 10
+        actions[j] += 5
 
 
 
 actions = np.divide(np.array(actions),1000)
 
-with open("actions_mal_dqn_1000", "wb") as fp:
+with open("actions_ben_dnn_lb_wsec0.9", "wb") as fp:
     pickle.dump((actions), fp)
 
-with open("rewards_mal_dqn_1000.pickle", "wb") as fp:
-    pickle.dump((rewards), fp)
-#
-with open("totpckts_mal_dqn_1000.pickle", "wb") as fp:
-     pickle.dump((tot_packets), fp)
+# with open("rewards_mal_dqn_1000.pickle", "wb") as fp:
+#     pickle.dump((rewards), fp)
+# #
+# with open("totpckts_mal_dqn_1000.pickle", "wb") as fp:
+#      pickle.dump((tot_packets), fp)
 
 # actions_benign_dnn = pd.read_pickle('actions_benign_dnn.pickle')
 # actions_benign_dqn = pd.read_pickle('actions_benign_dqn.pickle')

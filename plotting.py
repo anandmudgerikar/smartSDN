@@ -8,14 +8,14 @@ import numpy as np
 
 #only security
 # actions_benign_dqn = pd.read_pickle('actions_benign_dqn_1000')
+# actions_mal_dnn = pd.read_pickle('actions_mal_dnn.pickle')
 # actions_mal_dqn = pd.read_pickle('actions_mal_dqn_1000')
-# actions_mal_dqn = pd.read_pickle('actions_mal_dqn.pickle')
-# actions_benign_dnn = pd.read_pickle('actions_mal_dnn.pickle')
+# actions_benign_dnn = pd.read_pickle('actions_benign_dnn.pickle')
 #
-# #plt.plot(range(61),actions_mal_dnn, label = "mal dnn")
-# plt.plot(range(61),actions_mal_dqn, label = "Malicious flows")
-# #plt.plot(range(61),actions_benign_dnn, label = "benign dnn")
-# plt.plot(range(61),actions_benign_dqn, label = "Benign flows")
+# plt.plot(range(60),actions_mal_dnn, label = "Malicious flows: DNN Softmax")
+# plt.plot(range(60),actions_mal_dqn[:60], label = "Malicious flows: DQN")
+# plt.plot(range(60),actions_benign_dnn, label = "Benign flows: DNN Softmax")
+# plt.plot(range(60),actions_benign_dqn[:60], label = "Benign flows: DQN")
 
 #malicious flows
 # rewards_mal_dqn = pd.read_pickle('rewards_mal_dqn_1000.pickle')
@@ -43,20 +43,27 @@ import numpy as np
 # plt.show()
 
 
-# #load balancing
+#load balancing
 #actions_lb_wosec_mal = pd.read_pickle('actions_mal_dqn_lb_wosec.pickle')
 actions_lb_wosec_ben = pd.read_pickle('actions_benign_dqn_lb_wosec.pickle')
+actions_lb_ben_dnn = pd.read_pickle('actions_ben_dnn_lb_wsec0.9')
+#actions_lb_mal_dnn = pd.read_pickle('actions_mal_dnn_lb_wsec0.9')
 #actions_lb_wsec_mal_upper = pd.read_pickle('actions_mal_dqn_lb_wsec0.9.pickle')
 actions_lb_wsec_ben_upper = pd.read_pickle('actions_ben_dqn_lb_wsec0.9.pickle')
 #
-#plt.plot(range(61),actions_lb_wosec_mal, label = "Malicious flows (without security) d=0",color = 'r')
-plt.plot(range(61),actions_lb_wosec_ben, label = "Benign flows (without security) d=0",color = 'r')
-#plt.plot(range(61),actions_lb_wsec_mal_upper, label = "Malicious flows (with security) d=0.9",color='b')
-plt.plot(range(61),actions_lb_wsec_ben_upper, label = "Benign flows (with security) d=0.9",color = 'b')
+#plt.plot(range(61),actions_lb_wosec_mal, label = "Malicious flows: DQN based Signatures, d=0",color = 'r')
+plt.plot(range(61),actions_lb_wosec_ben, label = "Benign flows: DQN based Signatures (d=0)",color = 'r')
+#plt.plot(range(61),actions_lb_wsec_mal_upper, label = "Malicious flows: DQN based Signatures, d=0.9",color='b')
+plt.plot(range(61),actions_lb_wsec_ben_upper, label = "Benign flows: DQN based Signatures (d=0.9)",color = 'b')
+plt.plot(range(61),actions_lb_ben_dnn, label = "Malicious flows: DNN softmax based Signatures, d=0.9",color = 'y')
 #
-#plt.fill_between(range(61),actions_lb_wosec_mal,actions_lb_wsec_mal_upper,color='g')
-plt.fill_between(range(61),actions_lb_wosec_ben,actions_lb_wsec_ben_upper,color='g')
+plt.fill_between(range(61),10,actions_lb_wsec_ben_upper,color='b',alpha=0.2,label = "Safe Action Space")
+plt.fill_between(range(61),actions_lb_wosec_ben,actions_lb_wsec_ben_upper,color='g',alpha=0.2,label = "Region of Interest")
+plt.fill_between(range(61),actions_lb_wosec_ben,0,color='r',alpha=0.2,label = "Unsafe Action Space")
+#plt.fill_between(range(61),actions_lb_wosec_ben,actions_lb_wsec_ben_upper,color='g',alpha=0.2)
 #
+plt.rcParams.update({'font.size': 12})
+plt.rc('axes', titlesize=12)
 plt.legend()
 plt.xlabel('Time (seconds)')
 plt.ylabel('Action %(pckts blocked)')

@@ -131,7 +131,7 @@ for e in range(EPISODES):
                 agent.replay(batch_size)
 
             if(e % 100) == 0:
-                agent.save("dqn_agent_load_complete_wsec0.1")
+                agent.save("dnn_agent_load_complete_wsec0.1_norm")
 
             #best - 0.5 negative reward, state clipping, no reward clipping, epsilon_decay=0.995, mem=2000, batchsize = 60
             #dqn3 - 0.1 negative reward

@@ -18,15 +18,18 @@ from keras.layers import LSTM, Dense, Dropout, Masking, Embedding
 import random
 from tensorflow import keras
 import matplotlib.pyplot as plt
+from sklearn.naive_bayes import GaussianNB,MultinomialNB,CategoricalNB
+from sklearn.svm import SVC
+
 
 
 # importing Dataset (from pcap parser: known attacks)
 def importdata():
     # balance_data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_train.csv",sep=',', header=0)
     #
-    test_data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_test.csv",sep=',', header=0)
+    test_data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/mal_fixed_interval.csv",sep=',', header=0)
 
-    balance_data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/mal_fixed_interval.csv",sep=',', header=0)
+    balance_data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/training_attack_set.csv",sep=',', header=0)
 
     # # removing na and normalizing with mean
     # balance_data.fillna(balance_data.mean())
@@ -45,7 +48,14 @@ def importdata():
     print("Train Dataset: ", balance_data.head())
     #print("Test Dataset: ", test_data.head())
 
-    return balance_data, test_data
+    state_max = np.array([balance_data.max(axis=0).values[0], balance_data.max(axis=0).values[1], balance_data.max(axis=0).values[2],
+         balance_data.max(axis=0).values[3]])
+    state_min = np.array([balance_data.min(axis=0).values[0], balance_data.min(axis=0).values[1], balance_data.min(axis=0).values[2],
+         balance_data.min(axis=0).values[3]])
+
+    print(state_max,state_min)
+
+    return balance_data, test_data,state_max,state_min
 
 # split the dataset
 def splitdataset(balance_data):
@@ -74,7 +84,7 @@ def splitdataset(balance_data):
 
 
 def train_rl(X_train,y_train):
-    reconstructed_model = keras.models.load_model("../rl_models/rl_model_v14")
+    reconstructed_model = keras.models.load_model("../dqn_agent_fixed_interval")
     return reconstructed_model
 
 def train_forest(X_train, y_train):
@@ -88,6 +98,32 @@ def train_forest(X_train, y_train):
     #save dec tree model
     filename = 'rforest.sav'
     pickle.dump(dec_tree, open(filename, 'wb'))
+    return dec_tree
+
+def train_nb(X_train, y_train):
+    # Creating the RF classifier object
+    dec_tree = CategoricalNB()
+
+    # Performing training
+    dec_tree.fit(X_train, y_train)
+    print("Training complete")
+
+    # #save dec tree model
+    # filename = 'rforest.sav'
+    # pickle.dump(dec_tree, open(filename, 'wb'))
+    return dec_tree
+
+def train_svc(X_train, y_train):
+    # Creating the RF classifier object
+    dec_tree = SVC()
+
+    # Performing training
+    dec_tree.fit(X_train, y_train)
+    print("Training complete")
+
+    # #save dec tree model
+    # filename = 'rforest.sav'
+    # pickle.dump(dec_tree, open(filename, 'wb'))
     return dec_tree
 
 def train_dtree(X_train, y_train):
@@ -129,7 +165,7 @@ def prediction_forest(X_test, clf_object):
     #print(y_pred)
     return y_pred
 
-def prediction_dnn(X_test, clf_object,y_orig):
+def prediction_dnn(X_test, clf_object,y_orig,state_max,state_min):
     # Predicton on test with giniIndex
     y_pred = clf_object.predict(X_test)
     print(X_test)
@@ -141,21 +177,49 @@ def prediction_dnn(X_test, clf_object,y_orig):
     # print("prediction is", y_pred2)
 
     #return y_pred
+    print(np.argmax(y_pred,axis=1))
     return np.argmax(y_pred,axis=1)
 
-def prediction_rl(X_test,clf_object):
+def prediction_rl(X_test,clf_object,state_max,state_min):
     # Predicton on test with giniIndex
+    #for rl
+    X_test = np.divide(X_test - state_min, state_max - state_min)
     y_pred = clf_object.predict(X_test)
-    print("Predicted values:")
-    print(y_pred)
-    print(np.argmax(y_pred))
-    print(np.argmax(y_pred, axis=1))
+    #print(np.argmax(y_pred,axis=1))
 
-    y_pred2 = clf_object.predict((0,0,0,0))
-    print("prediction is",y_pred2)
 
+    # y_pred = np.array(list(zip(y_pred[:, 0], y_pred[:, 10])))
+    # print(np.argmax(y_pred, axis=1))
+    # return np.argmax(y_pred,axis=1)
+    # print(y_pred)
+
+    # y_pred = np.argmax(y_pred,axis=1)
+    # for i,y in enumerate(y_pred):
+    #     if(y>1):
+    #         y_pred[i] = 1
+    #     else:
+    #         y_pred[i] = 0
     # return y_pred
-    return np.argmax(y_pred, axis=1)
+
+    y_pred_final = [0]*len(y_pred)
+
+    for i, y in enumerate(y_pred):
+        y1 = y[0]
+        y2 = y[10]
+
+        if(y2 > 0.01331 and y1 < 0.012):
+            y_pred_final[i] = 1
+        else:
+            y_pred_final[i] = 0
+        print(y_pred_final[i],y1,y2)
+
+    #print(y_pred_final)
+    return y_pred_final
+
+    #y_pred = np.array(list(zip(y_pred[:,0],y_pred[:,10])))
+    #print(y_pred)
+
+    #end rl
 
 # Function to calculate accuracy
 def cal_accuracy(y_test, y_pred):
@@ -186,14 +250,19 @@ def cal_timing(y_test,y_pred, yq_values):
             output = 0
             output_pred = 0
             output_count = 0
+            output_count_pred = 0
 
         if(y_test[counter] == 1):
             output_count += 1
-            if(output_count >= 30):
+            if(output_count >= 0):
                 output = 1
 
         if( y_pred[counter] == 1 ):#and yq_values[counter][0] < 0 #and yq_values[counter][0] < 500 and yq_values[counter][1] > 600 #and yq_values[counter][0] < 3000 and yq_values[counter][1] > 4400
-            output_pred = 1
+
+            output_count_pred += 1
+            if (output_count_pred >= 0):
+                output_pred = 1
+            #output_pred = 1
             #print(yq_values[counter])
 
         counter +=1
@@ -236,12 +305,12 @@ def analyse_rl(y_test,y_pred, yq_values):
 # Driver code
 def main():
     # Building Phase
-    data, test_data = importdata()
+    data, test_data,state_max,state_min = importdata()
     X, Y, X_train, X_test, y_train, y_test = splitdataset(data)
 
-    # #IF testing
-    # X_test = test_data.values[:, 0:4]
-    # y_test = test_data.values[:, 4]
+    #IF testing
+    X_test = test_data.values[:, 0:4]
+    y_test = test_data.values[:, 4]
 
     le = LabelEncoder()
     le.fit(y_train)
@@ -249,6 +318,7 @@ def main():
     y_test = le.transform(y_test)
 
     y_orig = y_test
+    y_train_orig = y_train
     #changing dims for categorical features
     y_test = to_categorical(y_test)
     y_train = to_categorical(y_train)
@@ -257,13 +327,17 @@ def main():
     print(y_orig)
 
     #dec_tree = train_forest(X_train,y_train)
-    dec_tree = train_dnn(X_train,y_train)
+    #dec_tree = train_dtree(X_train, y_train)
+    #dec_tree = train_dnn(X_train,y_train)
+    dec_tree = train_rl(X_train, y_train)
+    #dec_tree = train_nb(X_train, y_train_orig)
+    #dec_tree = train_svc(X_train, y_train_orig)
 
     # Operational Phase
     print("Results:")
 
-    # # #adding noise for robustness testing
-    noise = np.random.normal(0, 10, X_test.shape)
+    #adding noise for robustness testing
+    noise = np.random.normal(0, 5, X_test.shape)
     X_test += noise.round()
 
     #for dnn only
@@ -273,8 +347,10 @@ def main():
 
     #print(X_test)
     # Prediction
-    y_pred = prediction_dnn(X_test, dec_tree, y_orig)
+    #y_pred = prediction_dnn(X_test, dec_tree, y_orig,state_max,state_min)
     #y_pred = prediction_forest(X_test, dec_tree)
+    y_pred = prediction_rl(X_test,dec_tree,state_max,state_min)
+
     cal_accuracy(y_orig, y_pred)
     cal_timing(y_orig,y_pred, yq_values)
     analyse_rl(y_orig,y_pred, yq_values)

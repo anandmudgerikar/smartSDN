@@ -39,6 +39,7 @@ class Attack_Sig_Gym(gym.Env):
 
         #security model
         self.reconstructed_model = keras.models.load_model("/home/anand/PycharmProjects/mininet_backend/dqn_agent_fixed_interval")
+        self.dnn_model = keras.models.load_model("./sec_anal/dnn_model")
 
     def _step(self, action):
         """
@@ -74,11 +75,19 @@ class Attack_Sig_Gym(gym.Env):
         #self.reward = self._get_reward(action) #for jarvis
         self.reward = self._get_reward(action)
 
-        # ##with security constraints
+        # ##with security constraints from dqn
         # state = np.reshape(self.ob, [1, self.state_size])
         # q_values = self.reconstructed_model.predict(state)
         # f1 = 0.1
         # self.reward = self.reward*(1-f1) + (f1)*q_values[0][action]
+
+        ##with security constraints from dnn
+        state = np.multiply(np.array(self.ob), self.state_max - self.state_min) + self.state_min
+
+        q_values = self.dnn_model.predict([[state]])
+        #print(q_values)
+        f1 = 0.9
+        self.reward = self.reward*(1-f1) - (((f1)*q_values[0][1])/1000)
 
         self.sum_rewards += self.reward
 
@@ -152,40 +161,40 @@ class Attack_Sig_Gym(gym.Env):
             v32: full episode training, no temporal (31)
         """
         reward = 0
-        # ##Security Reward
-        if (self.data.values[self.turns, 5] == "Malicious"):  # true neg
-            reward -= ((1 - action_tab[action])*self.ob[1]*0.5)  #no of malicious bytes going through #*500
-        else:
-            reward += ((1 - action_tab[action])*self.ob[1]) #false benign bytes going through #*500
+        # # ##Security Reward
+        # if (self.data.values[self.turns, 5] == "Malicious"):  # true neg
+        #     reward -= ((1 - action_tab[action])*self.ob[1]*0.5)  #no of malicious bytes going through #*500
+        # else:
+        #     reward += ((1 - action_tab[action])*self.ob[1]) #false benign bytes going through #*500
 
 
         #
         # f1 = 2
         # reward = reward*f1
-        # ##Load Balancing Reward
-        # mean, sigma = 30000, 5000
-        # server_capacity = np.random.normal(mean,sigma)
-        # #normalizing
-        # server_capacity = (server_capacity - self.state_min[1])/(self.state_max[1] - self.state_min[1])
-        #
+        ##Load Balancing Reward
+        mean, sigma = 30000, 5000
+        server_capacity = np.random.normal(mean,sigma)
+        #normalizing
+        server_capacity = (server_capacity - self.state_min[1])/(self.state_max[1] - self.state_min[1])
+
+        reward += ((1 - action_tab[action]) * self.ob[1])
+
+        if reward >= server_capacity:
+            reward = -0.01  # (-1*(joint_reward - server_threshold)/num_users)
+            return reward
+        # else:
+        #     reward += ((1 - action_tab[action]) * self.ob[1])
+
+        #user fairness reward
+        mean, sigma = 500, 100
+        user_sla = np.random.normal(mean, sigma)
+        # normalizing
+        user_sla = (user_sla - self.state_min[1]) / (self.state_max[1] - self.state_min[1])
+
         # reward += ((1 - action_tab[action]) * self.ob[1])
-        #
-        # if reward >= server_capacity:
-        #     reward = -0.01  # (-1*(joint_reward - server_threshold)/num_users)
-        #     return reward
-        # # else:
-        # #     reward += ((1 - action_tab[action]) * self.ob[1])
-        #
-        # #user fairness reward
-        # mean, sigma = 500, 100
-        # user_sla = np.random.normal(mean, sigma)
-        # # normalizing
-        # user_sla = (user_sla - self.state_min[1]) / (self.state_max[1] - self.state_min[1])
-        #
-        # # reward += ((1 - action_tab[action]) * self.ob[1])
-        #
-        # if reward < user_sla and self.ob[1] > user_sla:
-        #     reward = -0.001  # (-1*(joint_reward - server_threshold)/num_users)
+
+        if reward < user_sla and self.ob[1] > user_sla:
+            reward = -0.001  # (-1*(joint_reward - server_threshold)/num_users)
 
         return reward
 

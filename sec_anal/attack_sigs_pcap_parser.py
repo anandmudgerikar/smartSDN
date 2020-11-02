@@ -3,7 +3,6 @@ import ipaddress
 import datetime
 import glob, os
 
-
 os.chdir("/home/anand/ids_dataset/pcaps/205.174.165.80/CICDataset/CIC-IDS-2017/Dataset/newpcaps/")
 for file in glob.glob("*.pcap"):
 
@@ -65,15 +64,15 @@ for file in glob.glob("*.pcap"):
                     episode_begin = True
                     episode_start = ts
 
-                # #print(ts, label)
+                # # #print(ts, label)
                 # if(label == "dos"):
                 #     if(ts > 1499261700): #excluding slowloris and slowhttptest dos attacks
-                #         print(str(datetime.datetime.utcfromtimestamp(ts)),pckt_count_forward,bytes_forward,pckt_count_back,bytes_back,'Malicious')
+                #         print(str(datetime.datetime.utcfromtimestamp(ts)),interval,pckt_count_forward,bytes_forward,pckt_count_back,bytes_back,'Malicious')
                 # elif(label == "bruteforce"):
                 #     if (ts > 1499174400):  # excluding ftp patator brute force attacks
-                #         print(str(datetime.datetime.utcfromtimestamp(ts)), pckt_count_forward, bytes_forward,pckt_count_back, bytes_back,'Malicious')
-                # else:
-                print(str(datetime.datetime.utcfromtimestamp(ts)),interval, pckt_count_forward, bytes_forward,pckt_count_back, bytes_back,'Benign')
+                #         print(str(datetime.datetime.utcfromtimestamp(ts)),interval, pckt_count_forward, bytes_forward,pckt_count_back, bytes_back,'Malicious')
+                # #else:
+                print(str(datetime.datetime.utcfromtimestamp(ts)),interval, pckt_count_forward, bytes_forward,pckt_count_back, bytes_back,'Malicious')
 
             if(ts > episode_start + EPISODE_LEN):
                 pckt_count_forward = 0
@@ -92,7 +91,7 @@ for file in glob.glob("*.pcap"):
             continue
 
         #print(ipaddress.ip_address(ip.src), ipaddress.ip_address(ip.dst))
-        for user_ip in user_ips:
+        for user_ip in attacker_ips:
             if(ipaddress.ip_address(ip.dst) == ipaddress.ip_address('192.168.10.50') and ipaddress.ip_address(ip.src) == ipaddress.ip_address(user_ip)):
                 pckt_count_forward +=1
                 bytes_forward += len(ip)
