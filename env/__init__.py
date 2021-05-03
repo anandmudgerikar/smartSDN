@@ -9,3 +9,8 @@ register(
     id='attack-sig-v0',
     entry_point='env.attack_sig_gym:Attack_Sig_Gym',
 )
+
+register(
+    id='sdn-routing-v0',
+    entry_point='env.sdn_routing_gym:SDN_Routing_Gym',
+)
