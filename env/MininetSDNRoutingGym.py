@@ -20,7 +20,7 @@ from mininet.link import TCLink, Link
 from mininet.log import setLogLevel, info
 from mininet_setup import Mininet_Backend
 
-class SDN_Gym(gym.Env):
+class MininetSDNRoutingGym(gym.Env):
 
     def __init__(self):
 
@@ -42,7 +42,6 @@ class SDN_Gym(gym.Env):
         self.sla = 200
         self.previous_load = [0,0,0,0,0]
         self.queue_load = [0,0,0,0,0]
-
         self.previous_5_loadsum = [0,0,0,0,0]
         self.previous_5_counter = 0
 
@@ -202,11 +201,6 @@ class SDN_Gym(gym.Env):
         #             reward -= 50
         return reward
 
-    # def _get_reward_sec(action):
-    #
-    #
-    #     return reward
-
     def _get_new_state(self,action):
         """
         Get the next state from current state
@@ -236,7 +230,6 @@ class SDN_Gym(gym.Env):
         #         self.queue_load += leftover
 
         return next_state
-
 
     def _get_initial_state(self):
         return (0, 0, 0, 0, 0)

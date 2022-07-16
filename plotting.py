@@ -24,24 +24,40 @@ import numpy as np
 x_sec, y_sec,y_latency_loss_sec,y_ddos_bytes_sec = pd.read_pickle("rewards_rl_with_sec.pickle")
 x_wosec, y_wosec,y_latency_loss_wosec,y_ddos_bytes_wosec = pd.read_pickle("rewards_rl_without_sec.pickle")
 
-# plt.plot(x_sec,y_ddos_bytes_sec/np.min(y_ddos_bytes_wosec), label = "DDoS detection Loss with Jarvis")
-# plt.plot(x_sec,y_ddos_bytes_wosec/np.min(y_ddos_bytes_wosec), label = "DDoS detection Loss without Jarvis")
+for i,x in enumerate(y_latency_loss_wosec):
+    if x == -np.inf:
+      y_latency_loss_wosec[i] = -40000
 
-y_latency_loss_wosec = np.array(y_latency_loss_wosec)
-y_latency_loss_sec = np.array(y_latency_loss_sec)
+for i, x in enumerate(y_latency_loss_sec):
+    if x == -np.inf:
+        y_latency_loss_sec[i] = -40000
 
-y_latency_loss_wosec[y_latency_loss_wosec == -np.inf] = -40000
-y_latency_loss_sec[y_latency_loss_sec == -np.inf] = -40000
-
-print(y_latency_loss_wosec)
 print(y_latency_loss_sec)
+diff = [abs(a_i - b_i) for a_i, b_i in zip(y_latency_loss_sec/np.min(y_latency_loss_sec), y_latency_loss_wosec/np.min(y_latency_loss_sec))]
+count = 0
 
-plt.plot(x_sec,y_latency_loss_sec/np.min(y_latency_loss_sec), label = "Latency Loss with Jarvis")
-plt.plot(x_sec,y_latency_loss_wosec/np.min(y_latency_loss_sec), label = "Latency Loss without Jarvis")
+for i,x in enumerate(diff):
+    if x < 0.1:
+        count+=1
+
+print(count)
+# plt.plot(x_sec,y_ddos_bytes_sec/np.min(y_ddos_bytes_wosec), label = "DDoS based Attack detection Loss with STE-SDN")
+# plt.plot(x_sec,y_ddos_bytes_wosec/np.min(y_ddos_bytes_wosec), label = "Brute-Force based Attack detection Loss without STE-SDN")
+#
+# plt.fill_between(x_sec,y_ddos_bytes_sec/np.min(y_ddos_bytes_wosec),y_ddos_bytes_wosec/np.min(y_ddos_bytes_wosec),facecolor='green', alpha=0.5, label = "Unsafe Risk State-Action Space")
+
+
+
+        # print(y_latency_loss_wosec)
+# print(y_latency_loss_sec)
+#
+plt.plot(x_sec,y_latency_loss_sec/np.min(y_latency_loss_sec), label = "Web based Attacks Latency Loss with STE-SDN")
+plt.plot(x_sec,y_latency_loss_wosec/np.min(y_latency_loss_sec), label = "Web based Attacks Latency Loss without STE-SDN")
+plt.fill_between(x_sec,y_latency_loss_sec/np.min(y_latency_loss_sec),y_latency_loss_wosec/np.min(y_latency_loss_sec),facecolor='green', alpha=0.5, label = "Unsafe Performance State-Action Space")
 
 plt.legend()
 plt.xlabel('Episode')
-plt.ylabel('Latency Loss')
+plt.ylabel('Detection Loss')
 plt.show()
 
 # plt.plot(range(60),actions_mal_dqn[:60], label = "Malicious flows: DQN")

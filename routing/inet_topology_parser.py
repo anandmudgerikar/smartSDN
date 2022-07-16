@@ -1,7 +1,6 @@
 import collections
 import random
 from functools import lru_cache
-
 import pandas as pd
 
 class inet_topology_parser:
@@ -12,7 +11,7 @@ class inet_topology_parser:
         self.adj_list = collections.defaultdict(list)
         self.no_of_paths = 10
         self.no_of_nodes = 100
-        self.no_security_services = {"DDoS":5}
+        self.no_security_services = {"Brute":5} #"DDoS":5,"Web":5
         self.security_services_per_node = collections.defaultdict(set)
         self.security_services_per_pair_paths = collections.defaultdict(list)
 
@@ -53,7 +52,7 @@ class inet_topology_parser:
         @lru_cache(None)
         def dfs(node,weight_so_far,target,curr_path):
 
-            if node in visited or len(path_weights) >= self.no_of_paths or len(curr_path) > 10:
+            if node in visited or len(path_weights) >= self.no_of_paths or len(curr_path) >= 10:
                 return
 
             # if self.ddos_not_set:

@@ -35,11 +35,12 @@ class DQNAgent:
         self.y_ddos_bytes = []
 
     def build_graphs(self):
-        with open("rewards_rl_without_sec.pickle", "wb") as fp:
+        with open("rewards_rl_with_wosec_brute.pickle", "wb") as fp:
             pickle.dump((self.x, self.y,self.y_latency_loss,self.y_ddos_bytes), fp)
         #plt.plot(self.x, self.y, label="Total Rewards with RL + security")
         plt.plot(self.x, self.y_latency_loss, label="Total Latency Loss with secure RL")
         plt.plot(self.x, self.y_ddos_bytes, label="Total DDoS Bytes let through")
+        plt.legend()
         plt.show()
 
     def _build_model(self):

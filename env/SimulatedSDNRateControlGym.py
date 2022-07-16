@@ -11,15 +11,17 @@ import keras
 #discretizing actions : 1 = all pckts blocked, 0 = all allowed
 action_tab = {0:0, 1: 0.1, 2:0.2, 3:0.3,4:0.4, 5:0.5, 6:0.6, 7:0.7, 8:0.8, 9:0.9, 10:1 }
 
-class Attack_Sig_Gym(gym.Env):
+class SimulatedSDNRateControlGym(gym.Env):
 
     def __init__(self):
 
+        #Reading Training dataset
         #self.data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_train.csv", sep=',', header=0)
         self.data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/mal_fixed_interval.csv", sep=',', header=0)
 
+        # Features
         feature_cols = ['Interval','pckts_forward', 'bytes_forward', 'pckts_back', 'bytes_back', 'label']
-        self.data = self.data[feature_cols]  # Features
+        self.data = self.data[feature_cols]
 
         #normalizing data
         self.state_max = np.array([self.data.max(axis=0).values[1],self.data.max(axis=0).values[2],self.data.max(axis=0).values[3],self.data.max(axis=0).values[4]])
@@ -29,7 +31,8 @@ class Attack_Sig_Gym(gym.Env):
         print("Dataset Length: ", len(self.data))
         print("Dataset Shape: ", self.data.shape)
 
-        self.action_space = spaces.Discrete(11) #action = allow:1, drop:0
+        #setting state,actions and reward spaces
+        self.action_space = spaces.Discrete(11)
         self.observation_space = spaces.Tuple((spaces.Discrete(1000),spaces.Discrete(10000),spaces.Discrete(1000),spaces.Discrete(10000)))
         self.ob = self._get_initial_state()
         self.episode_over = False
@@ -69,12 +72,6 @@ class Attack_Sig_Gym(gym.Env):
                  use this for learning.
         """
 
-        self.turns += 1
-        self.ob = self._get_new_state(action)
-
-        #self.reward = self._get_reward(action) #for jarvis
-        self.reward = self._get_reward(action)
-
         # ##with security constraints from dqn
         # state = np.reshape(self.ob, [1, self.state_size])
         # q_values = self.reconstructed_model.predict(state)
@@ -88,11 +85,7 @@ class Attack_Sig_Gym(gym.Env):
         #print(q_values)
         f1 = 0.9
         self.reward = self.reward*(1-f1) - (((f1)*q_values[0][1])/1000)
-
         self.sum_rewards += self.reward
-
-        # if self.turns == len(self.data)-1:
-        #      self.episode_over = True
 
         if (self.data.values[self.turns, 0] - self.data.values[self.turns-1, 0]) != 1: #episode size
             self.episode_over = True
@@ -100,8 +93,6 @@ class Attack_Sig_Gym(gym.Env):
         if self.turns == len(self.data)-1:
             self.turns = 0
             self.episode_over = True
-
-
 
         # if((self.turns % 60) == 0):
         #     self.episode_over = True
@@ -149,26 +140,25 @@ class Attack_Sig_Gym(gym.Env):
          v21 : more exploration 0.2, fpr=pckts_forward*30, tnr = pckts_forward*20,  +ve reward = 200, ds=train_dataset(k attacks)
          v22 : more exploration 0.2, fpr=pckts_forward*40, tnr = pckts_forward*30,  +ve reward = 200, ds=train_dataset(k attacks)
          v23 : more exploration 0.2, fpr=pckts_forward*40, tnr = pckts_forward*40,  +ve reward = 200, ds=train_dataset(k attacks)
-          v24 : more exploration 0.2, fpr=pckts_forward*40, tnr = pckts_forward*20,  +ve reward = 200, ds=train_dataset(k attacks), episode size = 10
-          v25 : more exploration 0.2, fpr=-4, tnr = -2,  +ve reward = 2, ds=train_dataset(k attacks)
-           v26 : more exploration 0.2, fpr=-3, tnr = -2,  +ve reward = 2, ds=train_dataset(k attacks)
-            v27 : more exploration 0.2, fpr=-3, tnr = -2,  +ve reward = 2,4, ds=train_dataset(k attacks)
-            v27 : more exploration 0.2, fpr=-3, tnr = -2,fn =3, tp=6  , ds=train_dataset(k attacks)
-            v28 : more exploration 0.2, fpr=-3, tnr = -2,fn =1, tp=1  , ds=train_dataset(k attacks)
-            v29 : more exploration 0.2, fpr=-1, tnr = -2,fn =1, tp=1  , ds=train_dataset(k attacks), less replay (todo)
-            v30 : more exploration 0.2, fpr=-2, tnr = -1,fn =5, tp=5  , ds=train_dataset(k attacks), less replay
-            v31 : more exploration 0.2, fpr=-2, tnr = -1,fn =5, tp=5  , ds=train_dataset(k attacks) (todo)
-            v32: full episode training, no temporal (31)
+         v24 : more exploration 0.2, fpr=pckts_forward*40, tnr = pckts_forward*20,  +ve reward = 200, ds=train_dataset(k attacks), episode size = 10
+         v25 : more exploration 0.2, fpr=-4, tnr = -2,  +ve reward = 2, ds=train_dataset(k attacks)
+         v26 : more exploration 0.2, fpr=-3, tnr = -2,  +ve reward = 2, ds=train_dataset(k attacks)
+         v27 : more exploration 0.2, fpr=-3, tnr = -2,  +ve reward = 2,4, ds=train_dataset(k attacks)
+         v27 : more exploration 0.2, fpr=-3, tnr = -2,fn =3, tp=6  , ds=train_dataset(k attacks)
+         v28 : more exploration 0.2, fpr=-3, tnr = -2,fn =1, tp=1  , ds=train_dataset(k attacks)
+         v29 : more exploration 0.2, fpr=-1, tnr = -2,fn =1, tp=1  , ds=train_dataset(k attacks), less replay (todo)
+         v30 : more exploration 0.2, fpr=-2, tnr = -1,fn =5, tp=5  , ds=train_dataset(k attacks), less replay
+         v31 : more exploration 0.2, fpr=-2, tnr = -1,fn =5, tp=5  , ds=train_dataset(k attacks) (todo)
+         v32: full episode training, no temporal (31)
         """
         reward = 0
+
         # # ##Security Reward
         # if (self.data.values[self.turns, 5] == "Malicious"):  # true neg
         #     reward -= ((1 - action_tab[action])*self.ob[1]*0.5)  #no of malicious bytes going through #*500
         # else:
         #     reward += ((1 - action_tab[action])*self.ob[1]) #false benign bytes going through #*500
 
-
-        #
         # f1 = 2
         # reward = reward*f1
         ##Load Balancing Reward
@@ -176,7 +166,6 @@ class Attack_Sig_Gym(gym.Env):
         server_capacity = np.random.normal(mean,sigma)
         #normalizing
         server_capacity = (server_capacity - self.state_min[1])/(self.state_max[1] - self.state_min[1])
-
         reward += ((1 - action_tab[action]) * self.ob[1])
 
         if reward >= server_capacity:

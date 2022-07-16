@@ -2,15 +2,15 @@ from gym.envs.registration import register
 
 register(
     id='sdn-v0',
-    entry_point='env.sdn_gym:SDN_Gym',
+    entry_point='env.SimulatedSDNRateControlGym:SimulatedSDNRateControlGym',
 )
 
 register(
     id='attack-sig-v0',
-    entry_point='env.attack_sig_gym:Attack_Sig_Gym',
+    entry_point='env.MininetSDNRoutingGym:MininetSDNRoutingGym',
 )
 
 register(
     id='sdn-routing-v0',
-    entry_point='env.sdn_routing_gym:SDN_Routing_Gym',
+    entry_point='env.SimulatedSDNRoutingGym:SimulatedSDNRoutingGym',
 )

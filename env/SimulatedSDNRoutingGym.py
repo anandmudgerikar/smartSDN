@@ -12,7 +12,7 @@ import random
 import sys
 #sys.path.append("/usr/lib/python2.7/dist-packages/")
 
-class SDN_Routing_Gym(gym.Env):
+class SimulatedSDNRoutingGym(gym.Env):
 
     def __init__(self):
 
@@ -57,6 +57,7 @@ class SDN_Routing_Gym(gym.Env):
                         dtype=np.float32)
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
+
         #not well defined observation space, if required use above for more nuanced state/obs space
         #self.observation_space = spaces.Tuple((spaces.Discrete(self.data.shape[0]),))
 
@@ -64,11 +65,23 @@ class SDN_Routing_Gym(gym.Env):
         self.episode_over = False
         self.turns = 0
         self.sum_rewards = 0.0
-        self.risk_param = 0.5
+        self.risk_param = 0.9
         self.sum_ddos_bytes = 0.0
         self.sum_latency_reward = 0.0
+        self.testing_attack_type = "Brute" #"Web","Botnet"
 
-        self.data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/csv/Friday_botnet.csv", sep=',',header=0)
+        #Botnet DDoS
+        if self.testing_attack_type == "Botnet":
+            self.data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/csv/Friday_botnet.csv", sep=',',header=0)
+
+        #Web attacks: XSS,Brute-Force
+        if self.testing_attack_type == "Web":
+            self.data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/csv/web_attacks_infiltration.csv", sep=',',header=0)
+
+        # Brute Force attacks: ssh, ftp
+        if self.testing_attack_type == "Brute":
+            self.data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/csv/brute_force.csv",sep=',', header=0)
+
         feature_cols = ["Dst Port", "Protocol","Flow Duration",	"Tot Fwd Pkts","Tot Bwd Pkts", "TotLen Fwd Pkts", "TotLen Bwd Pkts",
         "Fwd Pkt Len Max", "Fwd Pkt Len Min","Fwd Pkt Len Mean","Fwd Pkt Len Std","Bwd Pkt Len Max","Bwd Pkt Len Min", "Bwd Pkt Len Mean",
         "Bwd Pkt Len Std","Flow Byts/s", "Flow Pkts/s", "Flow IAT Mean", "Flow IAT Std", "Flow IAT Max", "Flow IAT Min", "Fwd IAT Tot",
@@ -85,7 +98,8 @@ class SDN_Routing_Gym(gym.Env):
         self.data["Label"] = self.data["Label"].astype('category')
         self.data["Label"] = self.data["Label"].cat.codes
         self.flow_params_len = self.data.shape[1]
-        # print(self.data)
+
+        print(self.data)
         # print(self.flow_params_len)
 
         self.inet_parser = inet_topology_parser()
@@ -128,7 +142,6 @@ class SDN_Routing_Gym(gym.Env):
         self.reward = self._get_reward(action)
         self.sum_rewards += self.reward
 
-
         if self.turns > 10:
             self.episode_over = True
 
@@ -169,11 +182,20 @@ class SDN_Routing_Gym(gym.Env):
         :return:
         """
         func_reward = self.ob[self.flow_params_len + action] * -1
-        risk_reward = self.ob[self.flow_params_len - 1] * -10000  # 0 if flow is benign, 1 if flow is malicious
+        risk_reward = self.ob[self.flow_params_len - 1] * -100000  # 0 if flow is benign, 1 if flow is malicious
         # print("flow is malicious : ",self.ob[self.flow_params_len-1],risk_reward)
 
+        #Botnet DDoS
+        # if "DDoS" in self.sec_services[action]:
+        #     risk_reward = 0
 
-        if "DDoS" in self.sec_services[action]:
+        #print(self.sec_services)
+
+        # #web infiltration attacks
+        # if "Web" in self.sec_services[action]:
+        #     risk_reward = 0
+
+        if "Brute" in self.sec_services[action]:
             risk_reward = 0
 
         # maintaining individual rewards for plotting and testing
@@ -185,13 +207,19 @@ class SDN_Routing_Gym(gym.Env):
     def _get_reward_sec(self,action):
 
         func_reward = self.ob[self.flow_params_len+action]*-1
-        risk_reward = self.ob[self.flow_params_len-1]*-10000 # 0 if flow is benign, 1 if flow is malicious
+        risk_reward = self.ob[self.flow_params_len-1]*-100000 # 0 if flow is benign, 1 if flow is malicious
 
         #print("flow is malicious : ",self.ob[self.flow_params_len-1],risk_reward)
 
         #print(self.sec_services)
         #print(action)
-        if "DDoS" in self.sec_services[action]:
+        # if "DDoS" in self.sec_services[action]:
+        #     risk_reward = 0
+
+        # if "Web" in self.sec_services[action]:
+        #     risk_reward = 0
+
+        if "Brute" in self.sec_services[action]:
             risk_reward = 0
 
         #maintaining individual rewards for plotting and testing
@@ -217,7 +245,7 @@ class SDN_Routing_Gym(gym.Env):
         paths,sec_services = self.inet_parser.find_paths(node1, node2)
         next_state = np.concatenate((flow_params.values[0],[node1,node2],np.array(paths)),axis=0)
         self.sec_services = sec_services
-        #print(next_state)
+
         return next_state
 
     def _get_initial_state(self):
