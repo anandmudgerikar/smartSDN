@@ -21,8 +21,8 @@ import numpy as np
 # rewards_mal_dqn = pd.read_pickle('rewards_mal_dqn_1000.pickle')
 # total_pckts_mal_dqn = pd.read_pickle('totpckts_mal_dqn_1000.pickle')
 #
-x_sec, y_sec,y_latency_loss_sec,y_ddos_bytes_sec = pd.read_pickle("rewards_rl_with_sec.pickle")
-x_wosec, y_wosec,y_latency_loss_wosec,y_ddos_bytes_wosec = pd.read_pickle("rewards_rl_without_sec.pickle")
+x_sec, y_sec,y_latency_loss_sec,y_ddos_bytes_sec = pd.read_pickle("../rewards_rl_with_sec.pickle")
+x_wosec, y_wosec,y_latency_loss_wosec,y_ddos_bytes_wosec = pd.read_pickle("../rewards_rl_without_sec.pickle")
 
 for i,x in enumerate(y_latency_loss_wosec):
     if x == -np.inf:

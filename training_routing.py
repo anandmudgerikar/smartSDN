@@ -8,7 +8,7 @@ import random
 import pickle
 import matplotlib.pyplot as plt
 
-from env.sdn_routing_gym import SDN_Routing_Gym
+from env.SimulatedSDNRoutingGym import SimulatedSDNRoutingGym
 env = gym.make('sdn-routing-v0')
 
 from collections import deque
@@ -55,14 +55,12 @@ class DQNAgent:
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
 
-
     def act(self, state):
         if np.random.rand() <= self.epsilon:
            return env.action_space.sample()
 
         act_values = self.model.predict(state)
         return np.argmax(act_values[0])
-
 
     def replay(self, batch_size):
         minibatch = random.sample(self.memory, batch_size)
@@ -105,7 +103,6 @@ for e in range(EPISODES):
     state = env.reset()
     state = np.reshape(state, [1, state_size])
     for time in range(1000):
-        # env.render()
         action = agent.act(state)
         # print(action)
         next_state, reward, done, info = env.step(action)
@@ -114,7 +111,7 @@ for e in range(EPISODES):
         agent.remember(state, action, reward, next_state, done)
         state = next_state
 
-        #saving model
+        #saving model every 100 episodes
         if (e % 100) == 0:
             agent.save("routing_model_ddos_wsec")
 
@@ -129,8 +126,6 @@ for e in range(EPISODES):
 
         if len(agent.memory) > batch_size:
             agent.replay(batch_size)
-
-
 
 #store results and build graphs
 agent.build_graphs()

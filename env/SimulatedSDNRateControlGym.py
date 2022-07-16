@@ -16,7 +16,7 @@ class SimulatedSDNRateControlGym(gym.Env):
     def __init__(self):
 
         #Reading Training dataset
-        #self.data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_train.csv", sep=',', header=0)
+        #self.data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/rateControl/state_based/test2_new_train.csv", sep=',', header=0)
         self.data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/mal_fixed_interval.csv", sep=',', header=0)
 
         # Features
@@ -42,7 +42,7 @@ class SimulatedSDNRateControlGym(gym.Env):
 
         #security model
         self.reconstructed_model = keras.models.load_model("/home/anand/PycharmProjects/mininet_backend/dqn_agent_fixed_interval")
-        self.dnn_model = keras.models.load_model("./sec_anal/dnn_model")
+        self.dnn_model = keras.models.load_model("./rateControl/dnn_model")
 
     def _step(self, action):
         """

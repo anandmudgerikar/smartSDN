@@ -1,15 +1,9 @@
 import numpy as np
 import random
-import pickle
-from replay_buffer import ReplayBuffer
 
 import sys
 sys.path.append("/home/anand/gym")
 import gym
-import pickle
-import keras
-
-from env.sdn_gym import SDN_Gym
 
 env = gym.make('attack-sig-v0')
 

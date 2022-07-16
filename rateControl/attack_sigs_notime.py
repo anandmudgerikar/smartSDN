@@ -25,7 +25,7 @@ from sklearn.svm import SVC
 
 # importing Dataset (from pcap parser: known attacks)
 def importdata():
-    # balance_data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/sec_anal/state_based/test2_new_train.csv",sep=',', header=0)
+    # balance_data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/rateControl/state_based/test2_new_train.csv",sep=',', header=0)
     #
     test_data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/mal_fixed_interval.csv",sep=',', header=0)
 

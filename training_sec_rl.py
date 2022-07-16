@@ -10,19 +10,9 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
 
-from env.attack_sig_gym import Attack_Sig_Gym
-
+from env.SimulatedSDNRateControlGym import SimulatedSDNRateControlGym
 env = gym.make('attack-sig-v0')
 env.reset()
-# action = 0
-#
-# # print x
-# done = False
-#
-# while done == False:
-#     observation, reward, done, info = env.step(action)
-#     action = env.action_space.sample()
-#     print(observation, action, reward)
 
 class DQNAgent:
     def __init__(self, state_size, action_size):
@@ -86,28 +76,22 @@ class DQNAgent:
 # Q, stats = qLearning(env, 1000)
 
 EPISODES = 1000
-print()
 state_size = len(env.observation_space.spaces)
 action_size = env.action_space.n
 print("state and action sizes are:"+str(state_size)+","+str(action_size))
 agent = DQNAgent(state_size, action_size)
-# agent.load("./save/cartpole-dqn.h5")
 done = False
-batch_size =200
+batch_size = 200
 avg = 0
 
 for e in range(EPISODES):
     state = env.reset()
-    # state = env._get_initial_state()
-    # #env.turns = 0
-    # env.sum_rewards = 0.0
     done = False
     interval = 0
     # env.episode_done = False
 
     state = np.reshape(state, [1, state_size])
     while not done:
-        # env.render()
         action = agent.act(state)
         # print(action)
         next_state, reward, done, info = env.step(action)
@@ -133,13 +117,12 @@ for e in range(EPISODES):
             if(e % 100) == 0:
                 agent.save("dnn_agent_load_complete_wsec0.1_norm")
 
+            #comments for different fine tuning param tests
             #best - 0.5 negative reward, state clipping, no reward clipping, epsilon_decay=0.995, mem=2000, batchsize = 60
             #dqn3 - 0.1 negative reward
             #dqn4 - 0.5 negative reward
             #dqn5 - batchsize = 200
             #dqn_fixed_interval = 60 interval, reward = packets not bytes,
             break
-
-
 
 print("average score = ",(avg//EPISODES))

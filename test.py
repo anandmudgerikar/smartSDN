@@ -17,14 +17,14 @@ action = env.action_space.sample()
 state_size = len(env.observation_space.spaces)
 #print(action)
 
-filename = './sec_anal/rforest.sav'
+filename = 'rateControl/rforest.sav'
 dec_tree = pickle.load(open(filename, 'rb'))
 # print x
 done = False
 sum_rewards = 0
 reconstructed_model = keras.models.load_model("./dnn_agent_load_complete_wsec0.9_norm")
 
-dnn_model = keras.models.load_model("./sec_anal/dnn_model")
+dnn_model = keras.models.load_model("rateControl/dnn_model")
 
 #action = dec_tree.predict()
 actions = [0]*61
