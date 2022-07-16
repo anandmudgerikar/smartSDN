@@ -1,7 +1,5 @@
 import gym
-import random
-from gym import error, spaces, utils
-from gym.utils import seeding
+from gym import spaces
 import time
 import pickle
 import numpy as np
@@ -10,15 +8,8 @@ import sys
 #sys.path.append("/usr/lib/python2.7/dist-packages/")
 sys.path.append("/home/anand/mininet/mininet")
 
-from mininet.topo import Topo
-from mininet.net import Mininet
-from mininet.util import dumpNodeConnections
 from mininet.log import setLogLevel
-from mininet.net import Mininet, CLI
-from mininet.node import OVSKernelSwitch, Host
-from mininet.link import TCLink, Link
-from mininet.log import setLogLevel, info
-from mininet_setup import Mininet_Backend
+from Utils.mininet_setup import Mininet_Backend
 
 class MininetSDNRoutingGym(gym.Env):
 

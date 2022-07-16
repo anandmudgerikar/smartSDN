@@ -9,7 +9,7 @@ import pandas as pd
 
 # env = gym.make('sdn-v0')
 # env = gym.make('attack-sig-v0')
-data = pd.read_csv("/home/anand/PycharmProjects/mininet_backend/pcaps/all_attacks.csv", sep=',', header=0)
+data = pd.read_csv("/pcaps/all_attacks.csv", sep=',', header=0)
 
 feature_cols = ['Interval','pckts_forward', 'bytes_forward', 'pckts_back', 'bytes_back', 'label']
 data = data[feature_cols]  # Features

@@ -7,7 +7,6 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 
-
 # importing Dataset (known attack signatures)
 def importdata():
     balance_data = pd.read_csv("/home/anand/Dropbox/projects/thesis/smart_sdn/dataset/Wednesday-workingHours.pcap_ISCX_2class.csv",sep=',', header=0)
@@ -70,7 +69,6 @@ def prediction(X_test, clf_object):
     #print(y_pred)
     return y_pred
 
-
 # Function to calculate accuracy
 def cal_accuracy(y_test, y_pred):
     print("Confusion Matrix: ",
@@ -81,7 +79,6 @@ def cal_accuracy(y_test, y_pred):
 
     print("Report : ",
           classification_report(y_test, y_pred))
-
 
 # Driver code
 def main():
